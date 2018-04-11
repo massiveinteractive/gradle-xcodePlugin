@@ -2,6 +2,8 @@ allprojects {
 	apply plugin: 'java-gradle-plugin'
 	apply plugin: 'groovy'
 
+	apply from: project.rootProject.file('gradle/plugin_deployment.gradle')
+
 	def versionNumber = "0.15.2"
 
 	if (project.hasProperty("versionNumber")) {
