@@ -7,8 +7,10 @@ ext {
 	MAVEN_REPO_NAME = 'gradle-mdk'
 }
 
-String NexusUserName = System.getenv("bamboo_NexusUserName")
-String NexusPassword = System.getenv("bamboo_NexusPassword")
+println "nexusUsername : " + nexusUsername
+
+String NexusUserName = nexusUsername
+String NexusPassword = nexusPassword
 
 project.afterEvaluate {
 	File buildDir = project.rootProject.project("plugin").buildDir
