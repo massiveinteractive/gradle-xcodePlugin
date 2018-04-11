@@ -10,36 +10,32 @@ ext {
 String NexusUserName = System.getenv("bamboo_NexusUserName")
 String NexusPassword = System.getenv("bamboo_NexusPassword")
 
-// Versioning
-String BAMBOO_VERSION = System.getenv("bamboo_deploy_release")
-if (BAMBOO_VERSION == null) {
-	BAMBOO_VERSION = "0.2.0"
-}
+project.afterEvaluate {
+	File buildDir = project.rootProject.project("plugin").buildDir
+	File jarFile = new File(buildDir, "libs/xcode-plugin-" + project.version + ".jar")
 
-String ARTIFACT_VERSION = BAMBOO_VERSION + '-SNAPSHOT'
-String SUFFIX = ARTIFACT_VERSION.endsWith('-SNAPSHOT') ? '' : '-release'
+	publishing {
+		repositories {
+			String nexusUrl = "http://nexus.massiveinteractive.com"
+			String repoName = version
+			String repoUrl = "${nexusUrl}/content/repositories/${repoName}/"
+			maven {
+				url repoUrl
 
-publishing {
-	repositories {
-		String nexusUrl = "http://nexus.massiveinteractive.com"
-		String repoName = MAVEN_REPO_NAME + SUFFIX
-		String repoUrl = "${nexusUrl}/content/repositories/${repoName}"
-		maven {
-			url repoUrl
-
-			credentials {
-				username NexusUserName
-				password NexusPassword
+				credentials {
+					username NexusUserName
+					password NexusPassword
+				}
 			}
 		}
-	}
 
-	publications {
-		plugin(MavenPublication) {
-			artifact(project.rootProject.findProject("plugin").tasks.find {it.name == "jar"}) {
-				artifactId ARTIFACT_ID
-				groupId ARTIFACT_GROUP
-				version ARTIFACT_VERSION
+		publications {
+			plugin(MavenPublication) {
+				artifact(jarFile) {
+					artifactId ARTIFACT_ID
+					groupId ARTIFACT_GROUP
+					version project.version
+				}
 			}
 		}
 	}
