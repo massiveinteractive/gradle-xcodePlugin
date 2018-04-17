@@ -1,6 +1,7 @@
 package org.openbakery.simulators
 
-import org.openbakery.util.StringHelper
+import java.util.regex.Matcher
+import java.util.regex.Pattern
 
 class SimulatorDevice {
 
@@ -9,54 +10,26 @@ class SimulatorDevice {
 	public String state
 	public boolean available = true
 
-	public SimulatorDevice(String line) {
-		//   iPhone 4s (73C126C8-FD53-44EA-80A3-84F5F19508C0) (Shutdown)
-    // or
-		//   iPad Pro (12.9 inch) (C538D7F8-E581-44FF-9B17-5391F84642FB) (Shutdown)
-		// or
-		//    Resizable iPad (B33E6523-6E44-42EA-A8B6-AEFB6873E9E8) (Shutdown) (unavailable, device type profile not found)
+	private
+	static Pattern regDevice = ~/(?i)^\s{4}(.+) \(([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\)\s\(([^)]+)\)\s?(\(([^)]+)\))?/
 
-		String[] tokens = line.split(" ") as List
-
-		int index = findIdentifier(tokens)
-
-		if (index < 0) {
-			return
-		}
-
-		name = tokens[0..index-1].join(" ").trim()
-		identifier = StringHelper.removeBrackets(tokens[index])
-
-		index++
-		if (tokens.length > index) {
-			state = StringHelper.removeBrackets(tokens[index])
-		}
-
-		index++
-		if (tokens.length > index) {
-			available = !StringHelper.removeBrackets(tokens[index]).startsWith("unavailable")
-		}
+	SimulatorDevice(String name,
+					String identifier,
+					String state,
+					boolean available) {
+		this.name = name
+		this.identifier = identifier
+		this.state = state
+		this.available = available
 	}
-
-
-	int findIdentifier(String[] tokens) {
-		int index = -1
-		tokens.eachWithIndex { String entry, int i ->
-			if (entry ==~ /\(\w{8}-\w{4}-\w{4}-\w{4}-\w{12}\)/) {
-				index = i
-			}
-		}
-		return index
-	}
-
 
 	@Override
-	public String toString() {
+	String toString() {
 		return "SimulatorDevice{" +
-						"name='" + name + '\'' +
-						", identifier='" + identifier + '\'' +
-						", state='" + state + '\'' +
-						'}';
+				"name='" + name + '\'' +
+				", identifier='" + identifier + '\'' +
+				", state='" + state + '\'' +
+				'}';
 	}
 
 	boolean equals(o) {
@@ -72,5 +45,19 @@ class SimulatorDevice {
 
 	int hashCode() {
 		return identifier.hashCode()
+	}
+
+	static Optional<SimulatorDevice> fromString(String string = null) {
+		if (string != null) {
+			Matcher matcher = regDevice.matcher(string)
+			if (matcher.matches()) {
+				String optionalStatus = matcher.group(5)
+				return Optional.ofNullable(new SimulatorDevice(matcher.group(1),
+						matcher.group(2),
+						matcher.group(3),
+						optionalStatus == null || !optionalStatus.startsWith("unavailable")))
+			}
+		}
+		return Optional.empty()
 	}
 }

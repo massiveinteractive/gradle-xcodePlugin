@@ -55,9 +55,11 @@ abstract class SimCtlReportParser {
 					}
 
 					if (simulatorDevices != null) {
-						SimulatorDevice device = new SimulatorDevice(line)
-						simulatorDevices.add(device)
-						identifierToDevice[device.identifier] = device
+						SimulatorDevice.fromString(line)
+								.ifPresent { device ->
+							simulatorDevices.add(device)
+							identifierToDevice[device.identifier] = device
+						}
 					}
 
 					break
