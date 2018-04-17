@@ -1,5 +1,6 @@
 package org.openbakery.simulators
 
+import groovy.transform.CompileStatic
 import org.openbakery.CommandRunner
 import org.openbakery.CommandRunnerException
 import org.openbakery.xcode.Destination
@@ -9,32 +10,8 @@ import org.openbakery.xcode.Xcode
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-class SimulatorControl {
-
-
-	enum Section {
-		DEVICE_TYPE("== Device Types =="),
-		RUNTIMES("== Runtimes =="),
-		DEVICES("== Devices =="),
-		DEVICE_PAIRS("== Device Pairs ==")
-
-		private final String identifier
-
-		Section(String identifier) {
-			this.identifier = identifier
-		}
-
-
-		public static Section isSection(String line) {
-			for (Section section : Section.values()) {
-				if (section.identifier.equals(line)) {
-					return section;
-				}
-			}
-			return null
-		}
-
-	}
+@CompileStatic
+class SimulatorControl extends SimCtlReportParser {
 
 
 	private static Logger logger = LoggerFactory.getLogger(SimulatorControl.class)
@@ -42,115 +19,16 @@ class SimulatorControl {
 	CommandRunner commandRunner
 	Xcode xcode
 
-	ArrayList<SimulatorDeviceType> deviceTypes
-	ArrayList<SimulatorRuntime> runtimes
-	HashMap<SimulatorRuntime, List<SimulatorDevice>> devices
-	HashMap<String, SimulatorDevice> identifierToDevice
-	ArrayList<SimulatorDevicePair> devicePairs
-
 
 	public SimulatorControl(CommandRunner commandRunner, Xcode xcode) {
 		this.commandRunner = commandRunner
 		this.xcode = xcode
 	}
 
-	void parse() {
-		runtimes = new ArrayList<>()
-		devices = new HashMap<>()
-		deviceTypes = new ArrayList<>()
-		identifierToDevice = new HashMap<>()
-		devicePairs = new ArrayList<>()
-
-
-		Section section = null
-		String simctlList = simctl("list")
-
-		ArrayList<SimulatorDevice> simulatorDevices = null
-
-		SimulatorDevicePair pair = null
-
-		for (String line in simctlList.split("\n")) {
-
-			Section isSection = Section.isSection(line)
-			if (isSection != null) {
-				section = isSection
-				continue
-			}
-
-			switch (section) {
-				case Section.DEVICE_TYPE:
-					deviceTypes.add(new SimulatorDeviceType(line))
-					break
-				case Section.RUNTIMES:
-					SimulatorRuntime runtime = new SimulatorRuntime(line)
-					runtimes.add(runtime)
-					break
-				case Section.DEVICES:
-
-					SimulatorRuntime isRuntime = parseDevicesRuntime(line)
-					if (isRuntime != null) {
-						simulatorDevices = new ArrayList<>()
-						devices.put(isRuntime, simulatorDevices)
-						continue
-					}
-					if (line.startsWith("--")) {
-						// unknown runtime, so we are done
-						simulatorDevices = null
-					}
-
-					if (simulatorDevices != null) {
-						SimulatorDevice device = new SimulatorDevice(line)
-						simulatorDevices.add(device)
-						identifierToDevice[device.identifier] = device
-					}
-
-					break
-				case Section.DEVICE_PAIRS:
-
-
-					if (line ==~ /^\s+Watch.*/) {
-						pair.watch = parseIdentifierFromDevicePairs(line)
-					} else if (line ==~ /^\s+Phone.*/) {
-						pair.phone = parseIdentifierFromDevicePairs(line)
-					} else {
-						// is new device pair
-						pair = new SimulatorDevicePair(line)
-						devicePairs.add(pair)
-					}
-
-					break
-
-
-			}
-		}
-		Collections.sort(runtimes, new SimulatorRuntimeComparator())
-
+	@Override
+	String resolveCtlList() {
+		return simctl("list")
 	}
-
-	SimulatorDevice parseIdentifierFromDevicePairs(String line) {
-		def tokenizer = new StringTokenizer(line, "()");
-		if (tokenizer.hasMoreTokens()) {
-			// ignore first token
-			tokenizer.nextToken()
-		}
-		if (tokenizer.hasMoreTokens()) {
-			def identifier = tokenizer.nextToken().trim()
-			return getDeviceWithIdentifier(identifier)
-		}
-		return null
-
-	}
-
-
-	SimulatorRuntime parseDevicesRuntime(String line) {
-		for (SimulatorRuntime runtime in runtimes) {
-			if (line.equals("-- " + runtime.name + " --")) {
-				return runtime
-			}
-		}
-		return null
-	}
-
 
 	public void waitForDevice(SimulatorDevice device, int timeoutMS = 10000) {
 		def start = System.currentTimeMillis()
@@ -164,13 +42,13 @@ class SimulatorControl {
 		throw new Exception("Timeout waiting for " + device)
 	}
 
-	List<SimulatorRuntime> getRuntimes() {
-		if (runtimes == null) {
-			parse()
+	SimulatorRuntime getMostRecentRuntime(Type type) {
+		List<SimulatorRuntime> runtimes = getRuntimes(type);
+		if (runtimes.size() > 0) {
+			return runtimes.get(0)
 		}
-		return runtimes
+		return null;
 	}
-
 
 	List<SimulatorRuntime> getRuntimes(String name) {
 		List<SimulatorRuntime> result = []
@@ -196,15 +74,6 @@ class SimulatorControl {
 		return result;
 	}
 
-	SimulatorRuntime getMostRecentRuntime(Type type) {
-		List<SimulatorRuntime> runtimes = getRuntimes(type);
-		if (runtimes.size() > 0) {
-			return runtimes.get(0)
-		}
-		return null;
-	}
-
-
 	SimulatorDevice getDevice(SimulatorRuntime simulatorRuntime, String name) {
 		for (SimulatorDevice device in getDevices(simulatorRuntime)) {
 			if (device.name.equalsIgnoreCase(name)) {
@@ -224,48 +93,18 @@ class SimulatorControl {
 
 	Optional<SimulatorDevice> getDevice(final Destination destination) {
 		return getRuntime(destination)
-				.map { runtime -> getDevices(runtime)
-				.find { device -> device.name.equalsIgnoreCase(destination.name) } }
-	}
-
-	SimulatorDevice getDeviceWithIdentifier(String identifier) {
-		for (Map.Entry<SimulatorRuntime, List<SimulatorDevice>> entry in devices.entrySet()) {
-			for (SimulatorDevice device in entry.value) {
-				if (device.identifier == identifier) {
-					return device
-				}
+				.map { runtime -> getDevices(runtime as SimulatorRuntime) }
+				.map { list ->
+			(SimulatorDevice) list.find { device ->
+				((SimulatorDevice) device).name.equalsIgnoreCase(destination.name)
 			}
 		}
-		return null
 	}
 
 	List<SimulatorDevice> getDevices(SimulatorRuntime runtime) {
-		return getDevices().get(runtime)
+		return getDevices()
+				.get(runtime)
 	}
-
-
-	HashMap<SimulatorRuntime, List<SimulatorDevice>> getDevices() {
-		if (devices == null) {
-			parse()
-		}
-		return devices
-	}
-
-	List<SimulatorDeviceType> getDeviceTypes() {
-		if (deviceTypes == null) {
-			parse()
-		}
-		return deviceTypes
-	}
-
-	List<SimulatorDevicePair> getDevicePairs() {
-		if (devicePairs == null) {
-			parse()
-		}
-		return devicePairs
-
-	}
-
 
 	String simctl(String... commands) {
 		ArrayList<String> parameters = new ArrayList<>()
@@ -389,26 +228,21 @@ class SimulatorControl {
 	}
 
 	List<Destination> getAllDestinations(Type type) {
-		def allDestinations = []
-
-		getRuntimes(type).each { runtime ->
-			allDestinations.addAll(getAllDestinations(type, runtime))
-		}
-
-		return allDestinations
+		return getRuntimes(type)
+				.collect { runtime -> getAllDestinations(type, runtime) }
+				.flatten() as List<Destination>
 	}
 
 	List<Destination> getAllDestinations(Type type, SimulatorRuntime runtime) {
-		def allDestinations = []
-
-		getDevices(runtime).each { device ->
+		return getDevices(runtime)
+				.collect { device ->
 			Destination destination = new Destination()
 			destination.platform = type.value + ' Simulator'
 			destination.name = device.name
 			destination.os = runtime.version.toString()
 			destination.id = device.identifier
-			allDestinations << destination
+			return destination
 		}
-		return allDestinations
 	}
+
 }
