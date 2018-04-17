@@ -19,7 +19,6 @@ class SimulatorControl extends SimCtlReportParser {
 	CommandRunner commandRunner
 	Xcode xcode
 
-
 	public SimulatorControl(CommandRunner commandRunner, Xcode xcode) {
 		this.commandRunner = commandRunner
 		this.xcode = xcode
@@ -94,10 +93,9 @@ class SimulatorControl extends SimCtlReportParser {
 	Optional<SimulatorDevice> getDevice(final Destination destination) {
 		return getRuntime(destination)
 				.map { runtime -> getDevices(runtime as SimulatorRuntime) }
-				.map { list ->
-			(SimulatorDevice) list.find { device ->
+				.map { list -> list.findAll() { device ->
 				((SimulatorDevice) device).name.equalsIgnoreCase(destination.name)
-			}
+			}.find()
 		}
 	}
 
