@@ -35,6 +35,6 @@ class SimulatorStartTask extends AbstractSimulatorTask {
 	}
 
 	void runDevice(SimulatorDevice device) {
-		println "runDEvice: " + device
+		simulatorControl.resolveCtlList()
 	}
 }
