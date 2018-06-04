@@ -13,7 +13,7 @@ apply plugin: "org.ajoberstar.reckon"
 
 reckon {
 	scopeFromProp()
-	stageFromProp('snapshot', 'rc', 'final')
+	stageFromProp('dev', 'snapshot', 'rc', 'final')
 }
 
 reckonTagCreate.dependsOn 'check'
