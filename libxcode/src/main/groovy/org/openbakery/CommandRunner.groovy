@@ -23,7 +23,7 @@ import org.openbakery.output.OutputAppender
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-class CommandRunner {
+class CommandRunner implements Serializable{
 
 	private static Logger logger = LoggerFactory.getLogger(CommandRunner.class)
 
@@ -33,10 +33,6 @@ class CommandRunner {
 	String defaultBaseDirectory = "."
 
 	Thread readerThread
-
-	public CommandRunner() {
-
-	}
 
 	void setOutputFile(File outputFile) {
 		if (outputFile.exists()) {

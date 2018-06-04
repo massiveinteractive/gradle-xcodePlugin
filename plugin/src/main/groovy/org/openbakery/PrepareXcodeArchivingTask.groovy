@@ -11,6 +11,7 @@ import org.gradle.api.tasks.*
 import org.openbakery.codesign.ProvisioningProfileReader
 import org.openbakery.signing.KeychainCreateTask
 import org.openbakery.signing.ProvisioningInstallTask
+import org.openbakery.util.PathHelper
 import org.openbakery.util.PlistHelper
 
 @CompileStatic
@@ -21,7 +22,14 @@ class PrepareXcodeArchivingTask extends DefaultTask {
 	final Provider<RegularFile> entitlementsFile = newInputFile()
 
 	@OutputFile
-	final Provider<RegularFile> outputFile = newOutputFile()
+	final Property<RegularFile> outputFile = newOutputFile()
+
+	@InputDirectory
+	final Provider<RegularFile> projectFile = newInputFile()
+
+	final Provider<String> scheme = project.objects.property(String)
+	final Provider<String> buildConfiguration = project.objects.property(String)
+	final Provider<String> target = project.objects.property(String)
 
 	final ListProperty<File> registeredProvisioningFiles = project.objects.listProperty(File)
 	final Property<CommandRunner> commandRunnerProperty = project.objects.property(CommandRunner)
@@ -79,38 +87,97 @@ class PrepareXcodeArchivingTask extends DefaultTask {
 			}
 		}))
 
+		this.outputFile.set(project.layout
+				.buildDirectory
+				.file(PathHelper.FOLDER_ARCHIVE + "/" + PathHelper.GENERATED_XCARCHIVE_FILE_NAME))
+
 		this.onlyIf {
 			return certificateFriendlyName.present &&
 					configurationBundleIdentifier.present &&
-					outputFile.present &&
 					provisioningForConfiguration.present
+		}
+	}
+
+	private File getPbxProjFile() {
+		return new File(projectFile.get().asFile, "project.pbxproj")
+	}
+
+	private Serializable getValueFromPbxProjFile(String value) {
+		return plistHelperProperty.get()
+				.getValueFromPlist(toXml(getPbxProjFile()), value) as Serializable
+	}
+
+	private Serializable getObjectValueFromPbxProjFile(String value) {
+		return getValueFromPbxProjFile("objects:${value}")
+	}
+
+	private String findProductId(String rootKey) {
+		return getValueFromPbxProjFile("objects:${rootKey}:targets")
+				.find { it -> getObjectValueFromPbxProjFile("${it}:productName") == target.get() }
+	}
+
+	private String getBuildConfigurationIdentifier(String targetId) {
+		String configurationId = getObjectValueFromPbxProjFile("$targetId:buildConfigurationList")
+		List<String> list = getObjectValueFromPbxProjFile("${configurationId}:buildConfigurations") as List<String>
+		return list.find {
+			getValueFromPbxProjFile("objects:${it}:name") == buildConfiguration.get()
+		}
+	}
+
+	private void setBuildConfigurationBuildSetting(String bcId,
+												   String key,
+												   String value) {
+		String completeKey = "objects:${bcId}:buildSettings:${key}"
+		Object property = plistHelperProperty.get().getValueFromPlist(getPbxProjFile(), completeKey)
+
+		if (property == null) {
+			plistHelperProperty.get()
+					.addValueForPlist(getPbxProjFile(), completeKey, value)
+		} else {
+
+			plistHelperProperty.get()
+					.setValueForPlist(getPbxProjFile(), completeKey, value)
 		}
 	}
 
 	@TaskAction
 	void generate() {
-		logger.info("Preparing archiving")
+		String rootKey = getValueFromPbxProjFile("rootObject")
 
-		outputFile.get().asFile.text = ""
+		String buildConfigurationId = getBuildConfigurationIdentifier(findProductId(rootKey))
 
-		append(KEY_CODE_SIGN_IDENTITY, certificateFriendlyName.get())
-		append(KEY_BUNDLE_IDENTIFIER, configurationBundleIdentifier.get())
+		HashMap<String, String> map = new HashMap<>()
+
+		map.put("CODE_SIGN_STYLE", "Manual")
+
+		map.put(KEY_CODE_SIGN_IDENTITY, certificateFriendlyName.get())
+		map.put(KEY_BUNDLE_IDENTIFIER, configurationBundleIdentifier.get())
 
 		if (provisioningReader.present) {
 			ProvisioningProfileReader reader = provisioningReader.get()
-			append(KEY_DEVELOPMENT_TEAM, reader.getTeamIdentifierPrefix())
-			append(KEY_PROVISIONING_PROFILE_ID, reader.getUUID())
-			append(KEY_PROVISIONING_PROFILE_SPEC, reader.getName())
+			map.put(KEY_DEVELOPMENT_TEAM, reader.getTeamIdentifierPrefix())
+			map.put(KEY_PROVISIONING_PROFILE_ID, reader.getUUID())
+			map.put(KEY_PROVISIONING_PROFILE_SPEC, reader.getName())
 		}
 
-		if (entitlementsFilePath.present) {
-			append(KEY_CODE_SIGN_ENTITLEMENTS, entitlementsFilePath.get())
+		if (entitlementsFile.present) {
+			map.put("CODE_SIGN_ENTITLEMENTS", entitlementsFile.get().asFile.absolutePath)
+		}
+
+		map.each { k, v ->
+			setBuildConfigurationBuildSetting(buildConfigurationId, k, v)
 		}
 	}
 
-	private void append(String key, String value) {
-		outputFile.get()
-				.asFile
-				.append(System.getProperty("line.separator") + key + " = " + value)
+	private File toXml(File source) {
+		File file = File.createTempFile("project.plist", "")
+		commandRunnerProperty.get()
+				.run(["plutil",
+					  "-convert",
+					  "xml1",
+					  source.absolutePath,
+					  "-o", file.absolutePath])
+
+		return file
 	}
 }

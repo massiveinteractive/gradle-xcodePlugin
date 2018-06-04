@@ -43,7 +43,9 @@ class ProvisioningInstallTask extends Download {
 		super()
 		this.description = TASK_DESCRIPTION
 
-		this.onlyIf { !mobileProvisioningList.get().empty }
+		this.onlyIf {
+			!mobileProvisioningList.get().empty
+		}
 	}
 
 	@TaskAction

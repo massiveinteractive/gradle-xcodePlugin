@@ -94,7 +94,7 @@ class CoverageTask extends AbstractXcodeTask {
 		}
 
 		def possibleDirectories = [
-				"Build/Intermediates/CodeCoverage/" + project.xcodebuild.target + "/Coverage.profdata",
+				"Build/Intermediates/CodeCoverage/" + project.xcodebuild.target.get() + "/Coverage.profdata",
 				"Build/Intermediates/CodeCoverage/Coverage.profdata"
 		]
 

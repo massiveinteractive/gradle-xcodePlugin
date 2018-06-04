@@ -59,7 +59,7 @@ class CarthageBootStrapTaskFunctionalTest extends Specification {
 
 	def "The task should be executed with success if a `cartfile.resolved` file is present"() {
 		setup:
-		testProjectDir.newFile(CarthageBootStrapTask.CARTHAGE_FILE)
+		testProjectDir.newFile(CarthageBootStrapTask.CARTHAGE_RESOLVED_FILE)
 
 		when:
 		BuildResult result = gradleRunner.build()
@@ -76,7 +76,7 @@ class CarthageBootStrapTaskFunctionalTest extends Specification {
             github "ashleymills/Reachability.swift"
         """
 
-		File carthageResolvedFile = testProjectDir.newFile(CarthageBootStrapTask.CARTHAGE_FILE)
+		File carthageResolvedFile = testProjectDir.newFile(CarthageBootStrapTask.CARTHAGE_RESOLVED_FILE)
 		carthageResolvedFile << """
             github "ashleymills/Reachability.swift" "v4.1.0"
         """
@@ -114,7 +114,7 @@ class CarthageBootStrapTaskFunctionalTest extends Specification {
             github "ashleymills/Reachability.swift"
         """
 
-		File carthageResolvedFile = testProjectDir.newFile(CarthageBootStrapTask.CARTHAGE_FILE)
+		File carthageResolvedFile = testProjectDir.newFile(CarthageBootStrapTask.CARTHAGE_RESOLVED_FILE)
 		carthageResolvedFile << """
             github "ashleymills/Reachability.swift" "v4.1.0"
         """

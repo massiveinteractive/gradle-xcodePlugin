@@ -5,12 +5,10 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.Task
 import org.gradle.api.Transformer
 import org.gradle.api.file.Directory
-import org.gradle.api.file.RegularFile
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
 import org.gradle.api.specs.Spec
 import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 import org.openbakery.CommandRunner
@@ -33,8 +31,7 @@ class XcodeBuildArchiveTaskIosAndTvOS extends DefaultTask {
 	@Input
 	final Provider<Type> buildType = project.objects.property(Type)
 
-	@InputFile
-	final Property<RegularFile> xcConfigFile = newInputFile()
+	final Provider<String> buildConfiguration = project.objects.property(String)
 
 	@OutputDirectory
 	final Provider<Directory> outputArchiveFile = newOutputDirectory()
@@ -65,17 +62,17 @@ class XcodeBuildArchiveTaskIosAndTvOS extends DefaultTask {
 	void archive() {
 		assert scheme.present: "No target scheme configured"
 		assert outputArchiveFile.present: "No output file folder configured"
-		assert xcConfigFile.present: "No 'xcconfig' file configured"
+
+		outputArchiveFile.get().asFile.parentFile.mkdirs()
 
 		logger.lifecycle("Archive project with configuration: " +
 				"\n\tScheme : ${scheme.get()} " +
 				"\n\tXcode version : ${xcodeVersion.getOrElse("System default")}")
 
-
 		Xcodebuild.archive(commandRunnerProperty.get(),
 				scheme.get(),
 				outputArchiveFile.get().asFile,
-				xcConfigFile.get().asFile,
+				buildConfiguration.get(),
 				getXcodeAppForConfiguration().getOrNull())
 	}
 

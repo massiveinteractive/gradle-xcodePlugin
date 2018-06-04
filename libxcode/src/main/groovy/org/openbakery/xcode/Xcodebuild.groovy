@@ -66,10 +66,9 @@ class Xcodebuild {
 	static void archive(CommandRunner commandRunner,
 						String scheme,
 						File outputPath,
-						File xcConfig,
+						String configuration,
 						@Nullable File xcodeApp) {
 		assert scheme != null
-		assert xcConfig.exists() && !xcConfig.isDirectory()
 
 		HashMap<String, String> envMap = new HashMap<>()
 
@@ -80,8 +79,13 @@ class Xcodebuild {
 		List<String> args = [EXECUTABLE,
 							 ACTION_ARCHIVE,
 							 ARGUMENT_SCHEME, scheme,
-							 ARGUMENT_ARCHIVE_PATH, outputPath.absolutePath,
-							 ARGUMENT_XCCONFIG, xcConfig.absolutePath]
+							 "-configuration", configuration,
+							 ARGUMENT_ARCHIVE_PATH, outputPath.absolutePath]
+
+//		if (xcConfig != null) {
+//			args.push(ARGUMENT_XCCONFIG)
+//			args.push(xcConfig.absolutePath)
+//		}
 
 		commandRunner.run(args, envMap)
 	}

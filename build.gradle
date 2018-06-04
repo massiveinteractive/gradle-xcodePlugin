@@ -1,22 +1,44 @@
+buildscript {
+	repositories {
+		maven {
+			url "https://plugins.gradle.org/m2/"
+		}
+	}
+	dependencies {
+		classpath "org.ajoberstar.reckon:reckon-gradle:0.7.0"
+	}
+}
+
+apply plugin: "org.ajoberstar.reckon"
+
+reckon {
+	scopeFromProp()
+	stageFromProp('snapshot', 'rc', 'final')
+}
+
+reckonTagCreate.dependsOn 'check'
+
+//
+
 allprojects {
 	apply plugin: 'java-gradle-plugin'
 	apply plugin: 'groovy'
-
-	def versionNumber = "0.16.0.a603076-SNAPSHOT"
-
-	if (project.hasProperty("versionNumber")) {
-		versionNumber = project.versionNumber
-	}
-	if (project.hasProperty("versionSuffix")) {
-		versionNumber += project.versionSuffix
-	}
-	if (project.hasProperty("buildNumber")) {
-		versionNumber += "." + project.buildNumber
-	}
-
+//
+//	def versionNumber = "0.16.0.a603076-SNAPSHOT"
+//
+//	if (project.hasProperty("versionNumber")) {
+//		versionNumber = project.versionNumber
+//	}
+//	if (project.hasProperty("versionSuffix")) {
+//		versionNumber += project.versionSuffix
+//	}
+//	if (project.hasProperty("buildNumber")) {
+//		versionNumber += "." + project.buildNumber
+//	}
+//
 
 	group = 'org.openbakery'
-	version = versionNumber
+	version = project.version
 
 	sourceCompatibility = "1.6"
 	targetCompatibility = "1.6"

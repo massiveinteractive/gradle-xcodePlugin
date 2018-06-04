@@ -11,7 +11,6 @@ import org.openbakery.CommandRunner
 import org.openbakery.codesign.CodesignParameters
 import org.openbakery.signing.ProvisioningFile
 import org.openbakery.signing.SigningMethod
-import org.openbakery.util.PathHelper
 
 import javax.inject.Inject
 
@@ -69,10 +68,6 @@ class Signing {
 				+ System.currentTimeMillis()
 				+ ".keychain"))
 		this.timeout.set(3600)
-
-		this.xcConfigFile.set(project.layout
-				.buildDirectory
-				.file(PathHelper.FOLDER_ARCHIVE + "/" + PathHelper.GENERATED_XCARCHIVE_FILE_NAME))
 	}
 
 	void setKeychain(Object keychain) {
@@ -82,7 +77,8 @@ class Signing {
 		this.keychain.set(project.file(keychain))
 	}
 
-	public void setMethod(String method) {
+	void setMethod(String method) {
+		println "setMethod : " + method
 		signingMethod.set(SigningMethod.fromString(method)
 				.orElseThrow {
 			new IllegalArgumentException("Method : $method is not a valid export method")
@@ -145,7 +141,7 @@ class Signing {
 	}
 
 	@Override
-	public String toString() {
+	String toString() {
 		if (this.keychain != null) {
 			return "Signing{" +
 					" identity='" + identity + '\'' +

@@ -57,7 +57,7 @@ class VariableResolver {
 		return [
 			"PRODUCT_NAME": project.xcodebuild.productName,
 			"SRC_ROOT"    : project.projectDir.absolutePath,
-			"TARGET_NAME" : project.xcodebuild.target
+			"TARGET_NAME" : project.xcodebuild.target.get()
 		]
 	}
 }

@@ -107,7 +107,7 @@ abstract class AbstractXcodeBuildTask extends AbstractXcodeTask {
 	}
 
 	String getBundleIdentifier() {
-		File infoPlist = new File(project.projectDir, getXcodeExtension().infoPlist)
+		File infoPlist = new File(project.rootProject.rootDir, getXcodeExtension().infoPlist)
 		return plistHelper.getValueFromPlist(infoPlist, "CFBundleIdentifier")
 	}
 
@@ -118,8 +118,6 @@ abstract class AbstractXcodeBuildTask extends AbstractXcodeTask {
 	File getProvisioningFile() {
 		List<File> provisioningList = getProvisioningUriList()
 				.collect { it -> new File(new URI(it)) }
-
-		println "provisioningList : " + provisioningList
 
 		return Optional.ofNullable(ProvisioningProfileReader.getProvisionFileForIdentifier(bundleIdentifier,
 				provisioningList,

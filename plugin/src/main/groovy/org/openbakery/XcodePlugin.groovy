@@ -133,7 +133,6 @@ class XcodePlugin implements Plugin<Project> {
 	private Signing signingExtension
 	private XcodeBuildPluginExtension xcodeBuildPluginExtension
 	private InfoPlistExtension infoPlistExtension
-
 	private CommandRunner commandRunner
 	private PlistHelper plistHelper
 	private Security securityTool
@@ -488,26 +487,30 @@ class XcodePlugin implements Plugin<Project> {
 				.create(PrepareXcodeArchivingTask.NAME,
 				PrepareXcodeArchivingTask.class) {
 			it.group = XCODE_GROUP_NAME
-
 			it.certificateFriendlyName.set(signingExtension.certificateFriendlyName)
 			it.commandRunnerProperty.set(commandRunner)
 			it.configurationBundleIdentifier.set(infoPlistExtension.configurationBundleIdentifier)
 			it.entitlementsFile.set(signingExtension.entitlementsFile)
-			it.outputFile.set(signingExtension.xcConfigFile)
+			it.projectFile.set(xcodeBuildPluginExtension.projectFile)
+			signingExtension.xcConfigFile.set(it.outputFile)
 			it.plistHelperProperty.set(plistHelper)
 			it.registeredProvisioningFiles.set(signingExtension.registeredProvisioningFiles)
+
+			it.buildConfiguration.set(xcodeBuildPluginExtension.configuration)
+			it.scheme.set(xcodeBuildPluginExtension.scheme)
+			it.target.set(xcodeBuildPluginExtension.target)
 		}
 
 		project.getTasks().create(XcodeBuildArchiveTaskIosAndTvOS.NAME,
 				XcodeBuildArchiveTaskIosAndTvOS.class) {
 			it.setGroup(XCODE_GROUP_NAME)
 			it.buildType.set(xcodeBuildPluginExtension.type)
+			it.buildConfiguration.set(xcodeBuildPluginExtension.configuration)
 			it.commandRunnerProperty.set(commandRunner)
 			it.outputArchiveFile.set(xcodeBuildPluginExtension.schemeArchiveFile)
 			it.scheme.set(xcodeBuildPluginExtension.scheme)
 			it.xcode.set(xcode)
 			it.xcodeVersion.set(xcodeBuildPluginExtension.version)
-			it.xcConfigFile.set(signingExtension.xcConfigFile)
 			it.xcodeServiceProperty.set(xcodeBuildPluginExtension.xcodeServiceProperty)
 		}
 

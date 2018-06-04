@@ -43,7 +43,7 @@ class InfoPlistModifyTask extends AbstractDistributeTask {
 			throw new IllegalArgumentException("No Info.plist was found! Check you xcode project settings if the specified target has a Info.plist set.")
 		}
 
-		infoPlist = new File(project.projectDir, project.xcodebuild.infoPlist)
+		infoPlist = new File(project.rootProject.projectDir, project.xcodebuild.infoPlist)
 
 
 		logger.debug("Try to updating {}", infoPlist)
@@ -148,7 +148,7 @@ class InfoPlistModifyTask extends AbstractDistributeTask {
 			setValueForPlist(KeyBundleIdentifier, extension.bundleIdentifier)
 		} else {
 			xcodeExtension.getBuildTargetConfiguration(xcodeExtension.scheme.getOrNull(),
-					xcodeExtension.configuration)
+					xcodeExtension.configuration.get())
 					.map { it -> it.bundleIdentifier }
 					.ifPresent { it -> setValueForPlist(KeyBundleIdentifier, it) }
 		}

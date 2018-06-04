@@ -97,14 +97,13 @@ class XcodeProjectFile {
 			throw new IllegalArgumentException("Project file does not exist: " + this.projectFile)
 		}
 
-		if (project.xcodebuild.target == null) {
+		if (!project.xcodebuild.target.present) {
 			throw new IllegalArgumentException("'xcodebuild.target' is null");
 		}
 
-		BuildConfiguration settings = getBuildConfiguration(project.xcodebuild.target, project.xcodebuild.configuration)
+		BuildConfiguration settings = getBuildConfiguration(project.xcodebuild.target.get(), project.xcodebuild.configuration.get())
 		logger.debug("rootObjectKey {}", rootObjectKey);
-		verifyTarget(project.xcodebuild.target)
-
+		verifyTarget(project.xcodebuild.target.get())
 
 		if (StringUtils.isEmpty(project.xcodebuild.productName)) {
 			project.xcodebuild.productName = settings.productName

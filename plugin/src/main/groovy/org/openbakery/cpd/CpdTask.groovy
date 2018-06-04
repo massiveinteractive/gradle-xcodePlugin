@@ -47,7 +47,7 @@ class CpdTask extends AbstractXcodeTask {
 						"-cp", "\"${cp.join(':')}\"",
 						'net.sourceforge.pmd.cpd.CPD',
 						"--minimum-tokens", "10",
-						"--files", "${projectDir.absolutePath}/${xcodebuild.target}", "${projectDir.absolutePath}/${xcodebuild.target}Tests",
+						"--files", "${projectDir.absolutePath}/${xcodebuild.target.get()}", "${projectDir.absolutePath}/${xcodebuild.target}Tests",
 						"--language", "ObjectiveC",
 						"--encoding", "UTF-8",
 						"--format", "net.sourceforge.pmd.cpd.XMLRenderer"

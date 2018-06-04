@@ -35,6 +35,8 @@ class XcodeBuildPluginExtension {
 
 	final Property<Boolean> bitcode = project.objects.property(Boolean)
 	final Property<String> version = project.objects.property(String)
+	final Property<String> configuration = project.objects.property(String)
+	final Property<String> target = project.objects.property(String)
 	final Property<Type> targetType = project.objects.property(Type)
 	final Property<String> scheme = project.objects.property(String)
 	final DirectoryProperty archiveDirectory = project.layout.directoryProperty()
@@ -52,11 +54,8 @@ class XcodeBuildPluginExtension {
 
 	String infoPlist = null
 
-	String configuration = 'Debug'
 	boolean simulator = true
 	Type type = Type.iOS
-
-	String target
 
 	def additionalParameters = null
 	String bundleNameSuffix = null
@@ -260,7 +259,7 @@ class XcodeBuildPluginExtension {
 
 	// should be removed an replaced by the xcodebuildParameters.outputPath
 	File getOutputPath() {
-		String path = getConfiguration()
+		String path = configuration.get()
 		if (type != Type.macOS) {
 			path += "-"
 			if (type == Type.iOS) {
@@ -289,7 +288,7 @@ class XcodeBuildPluginExtension {
 
 			projectSettings.each { String key, BuildTargetConfiguration buildConfiguration ->
 
-				BuildConfiguration settings = buildConfiguration.buildSettings[configuration];
+				BuildConfiguration settings = buildConfiguration.buildSettings[configuration.get()];
 				if (settings != null && settings.bundleIdentifier.equalsIgnoreCase(bundleIdentifier)) {
 					result = settings
 					return
@@ -303,9 +302,9 @@ class XcodeBuildPluginExtension {
 
 	File getApplicationBundle() {
 
-		BuildTargetConfiguration buildConfiguration = projectSettings[target]
+		BuildTargetConfiguration buildConfiguration = projectSettings[target.get()]
 		if (buildConfiguration != null) {
-			BuildConfiguration buildSettings = buildConfiguration.buildSettings[configuration];
+			BuildConfiguration buildSettings = buildConfiguration.buildSettings[configuration.get()];
 			if (buildSettings != null && buildSettings.sdkRoot.equalsIgnoreCase("watchos")) {
 				BuildConfiguration parent = getParent(buildSettings)
 				return new File(getOutputPath(), parent.productName + "." + this.productType)
@@ -316,9 +315,9 @@ class XcodeBuildPluginExtension {
 
 	File getBinary() {
 		logger.debug("getBinary")
-		BuildTargetConfiguration buildConfiguration = projectSettings[target]
+		BuildTargetConfiguration buildConfiguration = projectSettings[target.get()]
 		if (buildConfiguration != null) {
-			BuildConfiguration buildSettings = buildConfiguration.buildSettings[configuration];
+			BuildConfiguration buildSettings = buildConfiguration.buildSettings[configuration.get()];
 			logger.debug("buildSettings: {}", buildSettings)
 			if (type == Type.macOS) {
 				return new File(getOutputPath(), buildSettings.productName + ".app/Contents/MacOS/" + buildSettings.productName)
@@ -330,17 +329,17 @@ class XcodeBuildPluginExtension {
 
 
 	BuildConfiguration getBuildConfiguration() {
-		BuildTargetConfiguration buildTargetConfiguration = projectSettings[target]
+		BuildTargetConfiguration buildTargetConfiguration = projectSettings[target.get()]
 		if (buildTargetConfiguration != null) {
-			return buildTargetConfiguration.buildSettings[configuration];
+			return buildTargetConfiguration.buildSettings[configuration.get()];
 		}
-		throw new IllegalStateException("No build configuration found for + target '" + parameters.target + "' and configuration '" + configuration + "'")
+		throw new IllegalStateException("No build configuration found for + target '" + parameters.target.get() + "' and configuration '" + configuration.get() + "'")
 	}
 
 	BuildConfiguration getBuildConfiguration(String bundleIdentifier) {
 		BuildConfiguration result = null
 		projectSettings.each() { target, buildTargetConfiguration ->
-			BuildConfiguration settings = buildTargetConfiguration.buildSettings[configuration]
+			BuildConfiguration settings = buildTargetConfiguration.buildSettings[configuration.get()]
 
 			if (settings != null) {
 
@@ -383,10 +382,12 @@ class XcodeBuildPluginExtension {
 		this.simulator = simulator.toString().equalsIgnoreCase("true") || simulator.toString().equalsIgnoreCase("yes")
 	}
 
-	void setProjectFile(def projectFile) {
-		if (projectFile instanceof File) {
-			this.projectFile = projectFile
-		}
+	void setProjectFile(File projectFile) {
+		assert projectFile.exists()
+		this.projectFile = projectFile
+	}
+
+	void setProjectFile(String projectFile) {
 		this.projectFile = new File(project.projectDir.absolutePath, projectFile)
 	}
 
@@ -395,12 +396,12 @@ class XcodeBuildPluginExtension {
 			return this.projectFile
 		}
 
-		String[] projectFiles = project.projectDir.list(new SuffixFileFilter(".xcodeproj"))
+		String[] projectFiles = project.rootProject.projectDir.list(new SuffixFileFilter(".xcodeproj"))
 		if (!projectFiles || projectFiles.length < 1) {
 			throw new FileNotFoundException("No Xcode project files were found in ${project.projectDir}")
 		}
 
-		return new File(project.projectDir, projectFiles.first())
+		return new File(project.rootProject.projectDir, projectFiles.first())
 	}
 
 	// should be remove in the future, so that every task has its own xcode object
@@ -416,11 +417,11 @@ class XcodeBuildPluginExtension {
 	XcodebuildParameters getXcodebuildParameters() {
 		def result = new XcodebuildParameters()
 		result.scheme = this.scheme.getOrNull()
-		result.target = this.target
+		result.target = this.target.get()
 		result.simulator = this.simulator
 		result.type = this.type
 		result.workspace = getWorkspace()
-		result.configuration = this.configuration
+		result.configuration = this.configuration.get()
 		result.dstRoot = this.getDstRoot().asFile.getOrNull()
 		result.objRoot = this.getObjRoot().asFile.getOrNull()
 		result.symRoot = this.getSymRoot().asFile.getOrNull()
