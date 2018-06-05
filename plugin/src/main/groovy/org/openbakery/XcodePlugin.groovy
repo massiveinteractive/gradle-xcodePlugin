@@ -499,6 +499,8 @@ class XcodePlugin implements Plugin<Project> {
 			it.buildConfiguration.set(xcodeBuildPluginExtension.configuration)
 			it.scheme.set(xcodeBuildPluginExtension.scheme)
 			it.target.set(xcodeBuildPluginExtension.target)
+			it.xcodeVersion.set(xcodeBuildPluginExtension.version)
+			it.xcodeServiceProperty.set(xcodeBuildPluginExtension.xcodeServiceProperty)
 		}
 
 		project.getTasks().create(XcodeBuildArchiveTaskIosAndTvOS.NAME,

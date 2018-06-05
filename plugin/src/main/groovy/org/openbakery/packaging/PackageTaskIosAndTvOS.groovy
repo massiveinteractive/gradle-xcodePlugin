@@ -4,12 +4,14 @@ import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import org.gradle.api.DefaultTask
 import org.gradle.api.Task
+import org.gradle.api.Transformer
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.*
 import org.openbakery.CommandRunner
 import org.openbakery.XcodePlugin
+import org.openbakery.XcodeService
 import org.openbakery.signing.KeychainCreateTask
 import org.openbakery.signing.ProvisioningFile
 import org.openbakery.signing.ProvisioningInstallTask
@@ -21,6 +23,9 @@ import org.openbakery.xcode.Xcodebuild
 
 @CompileStatic
 class PackageTaskIosAndTvOS extends DefaultTask {
+
+	@Input
+	final Provider<String> xcodeVersion = project.objects.property(String)
 
 	@Input
 	public final Property<SigningMethod> signingMethod = project.objects.property(SigningMethod)
@@ -42,6 +47,8 @@ class PackageTaskIosAndTvOS extends DefaultTask {
 
 	final Provider<CommandRunner> commandRunner = project.objects.property(CommandRunner)
 	final Provider<PlistHelper> plistHelper = project.objects.property(PlistHelper)
+	final Property<XcodeService> xcodeServiceProperty = project.objects.property(XcodeService)
+
 
 	public static final String DESCRIPTION = "Package the archive with Xcode-build"
 	public static final String NAME = "packageWithXcodeBuild"
@@ -162,6 +169,24 @@ class PackageTaskIosAndTvOS extends DefaultTask {
 		Xcodebuild.packageIpa(commandRunner.get(),
 				getArchiveFile(),
 				getOutputDirectory(),
-				getExportOptionsPlistFile())
+				getExportOptionsPlistFile(),
+				getXcodeAppForConfiguration().getOrNull())
+	}
+
+	private Provider<File> getXcodeAppForConfiguration() {
+
+		Provider<File> xcodeApp
+		if (xcodeVersion.present) {
+			xcodeApp = xcodeServiceProperty.map(new Transformer<File, XcodeService>() {
+				@Override
+				File transform(XcodeService xcodeService) {
+					XcodeService.XcodeApp app = xcodeService.getInstallationForVersion(xcodeVersion.get())
+					return app.contentDeveloperFile
+				}
+			})
+		} else {
+			xcodeApp = project.objects.property(File)
+		}
+		return xcodeApp
 	}
 }

@@ -50,17 +50,26 @@ class Xcodebuild {
 	static void packageIpa(CommandRunner commandRunner,
 						   File archivePath,
 						   File exportPath,
-						   File exportOptionsPlist) {
+						   File exportOptionsPlist,
+						   @Nullable File xcodeApp) {
 
 		assert archivePath != null && archivePath.exists()
 		assert exportPath != null && exportPath.exists()
 		assert exportOptionsPlist != null && exportOptionsPlist.exists()
 
-		commandRunner.run(EXECUTABLE,
-				ACTION_EXPORT_ARCHIVE,
-				ARGUMENT_ARCHIVE_PATH, archivePath.absolutePath,
-				ARGUMENT_EXPORT_PATH, exportPath.absolutePath,
-				ARGUMENT_EXPORT_OPTIONS_PLIST, exportOptionsPlist.absolutePath)
+		// Env value
+		HashMap<String, String> envMap = new HashMap<>()
+		if (xcodeApp != null) {
+			envMap.put(Xcode.ENV_DEVELOPER_DIR, xcodeApp.absolutePath)
+		}
+
+		List<String> args = [EXECUTABLE,
+							 ACTION_EXPORT_ARCHIVE,
+							 ARGUMENT_ARCHIVE_PATH, archivePath.absolutePath,
+							 ARGUMENT_EXPORT_PATH, exportPath.absolutePath,
+							 ARGUMENT_EXPORT_OPTIONS_PLIST, exportOptionsPlist.absolutePath]
+
+		commandRunner.run(args, envMap)
 	}
 
 	static void archive(CommandRunner commandRunner,
@@ -81,11 +90,6 @@ class Xcodebuild {
 							 ARGUMENT_SCHEME, scheme,
 							 "-configuration", configuration,
 							 ARGUMENT_ARCHIVE_PATH, outputPath.absolutePath]
-
-//		if (xcConfig != null) {
-//			args.push(ARGUMENT_XCCONFIG)
-//			args.push(xcConfig.absolutePath)
-//		}
 
 		commandRunner.run(args, envMap)
 	}
