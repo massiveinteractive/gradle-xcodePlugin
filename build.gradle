@@ -1,22 +1,6 @@
-buildscript {
-	repositories {
-		maven {
-			url "https://plugins.gradle.org/m2/"
-		}
-	}
-	dependencies {
-		classpath "org.ajoberstar.reckon:reckon-gradle:0.7.0"
-	}
+plugins {
+	id 'nebula.release' version '6.0.0'
 }
-
-apply plugin: "org.ajoberstar.reckon"
-
-reckon {
-	scopeFromProp()
-	stageFromProp('dev', 'rc', 'final')
-}
-
-reckonTagCreate.dependsOn 'check'
 
 //
 
