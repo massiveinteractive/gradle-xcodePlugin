@@ -1,11 +1,22 @@
 buildscript {
-	repositories { jcenter() }
+	repositories {
+		maven {
+			url "https://plugins.gradle.org/m2/"
+		}
+	}
 	dependencies {
-		classpath 'com.netflix.nebula:nebula-release-plugin:6.0.0'
+		classpath "org.ajoberstar.reckon:reckon-gradle:0.7.0"
 	}
 }
-apply plugin: 'nebula.release'
 
+apply plugin: "org.ajoberstar.reckon"
+
+reckon {
+	scopeFromProp()
+	stageFromProp('dev', 'rc', 'final')
+}
+
+reckonTagCreate.dependsOn 'check'
 
 //
 
@@ -27,7 +38,7 @@ allprojects {
 //
 
 	group = 'org.openbakery'
-	version = project.version.toString()
+	version = project.version
 
 	sourceCompatibility = "1.6"
 	targetCompatibility = "1.6"
