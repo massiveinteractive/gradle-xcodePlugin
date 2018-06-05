@@ -38,7 +38,7 @@ allprojects {
 //
 
 	group = 'org.openbakery'
-	version = project.version
+	version = project.version.toString() + "-SNAPSHOT"
 
 	sourceCompatibility = "1.6"
 	targetCompatibility = "1.6"
