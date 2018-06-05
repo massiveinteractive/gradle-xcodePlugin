@@ -151,6 +151,7 @@ class PrepareXcodeArchivingTask extends DefaultTask {
 		map.put("CODE_SIGN_STYLE", "Manual")
 
 		map.put(KEY_CODE_SIGN_IDENTITY, certificateFriendlyName.get())
+		map.put("CODE_SIGN_IDENTITY[sdk=iphoneos*]", certificateFriendlyName.get())
 		map.put(KEY_BUNDLE_IDENTIFIER, configurationBundleIdentifier.get())
 
 		if (provisioningReader.present) {
