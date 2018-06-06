@@ -1,15 +1,22 @@
-plugins {
-	id 'nebula.release' version '6.0.0'
+String getGitDescribeVersion() {
+	ByteArrayOutputStream output = new ByteArrayOutputStream()
+
+	project.exec({ ExecSpec execSpec ->
+		execSpec.args = ["describe", "--tags", "--always", "--first-parent"]
+		execSpec.executable = "git"
+		execSpec.standardOutput = output
+	})
+
+	return output.toString().trim()
 }
 
 //
-
 allprojects {
 	apply plugin: 'java-gradle-plugin'
 	apply plugin: 'groovy'
 
 	group = 'org.openbakery'
-	version = project.version.toString() + "-SNAPSHOT"
+	version = getGitDescribeVersion() + "-SNAPSHOT"
 
 	sourceCompatibility = "1.6"
 	targetCompatibility = "1.6"
