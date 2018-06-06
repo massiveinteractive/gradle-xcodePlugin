@@ -78,7 +78,6 @@ class Signing {
 	}
 
 	void setMethod(String method) {
-		println "setMethod : " + method
 		signingMethod.set(SigningMethod.fromString(method)
 				.orElseThrow {
 			new IllegalArgumentException("Method : $method is not a valid export method")

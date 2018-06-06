@@ -20,7 +20,6 @@ enum SigningMethod {
 	}
 
 	static Optional<SigningMethod> fromString(value) {
-		println "fromString : " + value
 		return Optional.ofNullable(values().find { it.getValue() == value })
 	}
 }
