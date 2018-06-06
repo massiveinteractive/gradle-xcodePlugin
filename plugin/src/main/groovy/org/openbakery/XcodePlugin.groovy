@@ -629,6 +629,7 @@ class XcodePlugin implements Plugin<Project> {
 			it.registeredProvisioningFiles.set(signingExtension.registeredProvisioning)
 			it.scheme.set(xcodeBuildPluginExtension.scheme)
 			it.signingMethod.set(signingExtension.signingMethod)
+			it.xcodeVersion.set(xcodeBuildPluginExtension.version)
 		}
 	}
 
