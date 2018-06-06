@@ -94,11 +94,13 @@ class CarthageBootStrapTask extends DefaultTask {
 	@TaskAction
 	void update() {
 		logger.warn('Bootstrap Carthage for platform ' + carthagePlatformName)
+		println "getDerivedDataFolder().absolutePath : " + getDerivedDataFolder().absolutePath
 		project.exec(new Action<ExecSpec>() {
 			@Override
 			void execute(ExecSpec execSpec) {
 				execSpec.args = [ACTION_BOOTSTRAP,
 								 ARG_CACHE_BUILDS,
+								 "--derived-data", getDerivedDataFolder().absolutePath,
 								 "--new-resolver",
 								 "--color", "always",
 								 ARG_PLATFORM,
@@ -109,6 +111,12 @@ class CarthageBootStrapTask extends DefaultTask {
 				execSpec.workingDir(project.rootProject.projectDir)
 			}
 		})
+	}
+
+	private static File getDerivedDataFolder() {
+		File result = new File(System.getProperty("java.io.tmpdir"), "carthage-cache")
+		result.mkdirs()
+		return result
 	}
 
 	private final Map<String, String> getEnvValues() {
