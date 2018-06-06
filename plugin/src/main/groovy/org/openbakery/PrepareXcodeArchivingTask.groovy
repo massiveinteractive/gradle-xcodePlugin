@@ -153,7 +153,6 @@ class PrepareXcodeArchivingTask extends DefaultTask {
 		map.put(KEY_CODE_SIGN_IDENTITY, certificateFriendlyName.get())
 		map.put("CODE_SIGN_IDENTITY[sdk=iphoneos*]", certificateFriendlyName.get())
 		map.put(KEY_BUNDLE_IDENTIFIER, configurationBundleIdentifier.get())
-		map.put("PRODUCT_NAME", configurationBundleIdentifier.get().replace(".", "_"))
 
 		if (provisioningReader.present) {
 			ProvisioningProfileReader reader = provisioningReader.get()
