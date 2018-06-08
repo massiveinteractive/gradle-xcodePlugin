@@ -30,7 +30,6 @@ class XcodeProjectFile {
 	boolean isOSX = false;
 
 
-
 	XcodeProjectFile(Project project, File projectFile) {
 		this.project = project
 		this.projectFile = projectFile
@@ -91,6 +90,7 @@ class XcodeProjectFile {
 	}
 
 	/* remove this method and update project.xcodebuild settings on the proper places */
+
 	void parse() {
 		this.project.logger.debug("Parse project file: " + projectFile.absolutePath)
 		if (!this.projectFile.exists()) {
@@ -156,7 +156,7 @@ class XcodeProjectFile {
 		}
 
 
-		String deviceFamily =  getBuildSetting(buildConfiguration, "TARGETED_DEVICE_FAMILY")
+		String deviceFamily = getBuildSetting(buildConfiguration, "TARGETED_DEVICE_FAMILY")
 		if (deviceFamily == "1") {
 			buildSettings.devices = Devices.PHONE
 		} else if (deviceFamily == "2") {

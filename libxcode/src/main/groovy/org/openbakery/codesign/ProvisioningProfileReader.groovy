@@ -149,6 +149,9 @@ class ProvisioningProfileReader {
 		}
 	}
 
+	List<String> getPlatforms() {
+		return config.getProperty("Platform")
+	}
 
 	String getUUID() {
 		return config.getString("UUID")

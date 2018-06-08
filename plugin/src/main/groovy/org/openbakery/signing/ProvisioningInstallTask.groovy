@@ -15,9 +15,13 @@ import org.gradle.api.tasks.TaskAction
 import org.openbakery.CommandRunner
 import org.openbakery.codesign.ProvisioningProfileReader
 import org.openbakery.util.PlistHelper
+import org.openbakery.xcode.Type
 
 @CompileStatic
 class ProvisioningInstallTask extends Download {
+
+	@Input
+	final Provider<Type> buildType = project.objects.property(Type)
 
 	@Input
 	final Provider<List<String>> mobileProvisioningList = project.objects.listProperty(String)
@@ -63,11 +67,6 @@ class ProvisioningInstallTask extends Download {
 		this.acceptAnyCertificate(true)
 	}
 
-	void registerProvisioning(ProvisioningFile provisioningFile) {
-		registeredProvisioning.add(provisioningFile.getFile())
-		registeredProvisioningFiles.add(provisioningFile)
-	}
-
 	File registerProvisioningInToUserLibrary(ProvisioningFile provisioningFile) {
 		PROVISIONING_DIR.mkdirs()
 
@@ -86,11 +85,18 @@ class ProvisioningInstallTask extends Download {
 		deleteFilesOnExit(files.collect { it.file })
 
 		// Register it
-		files.each(this.&registerProvisioning)
+		files.findAll { it.supportBuildType(buildType.get()) }
+				.each(this.&registerProvisioning)
 
 		// Register into the user library
 		List<File> registeredFiles = files.collect(this.&registerProvisioningInToUserLibrary)
 		deleteFilesOnExit(registeredFiles)
+	}
+
+	void registerProvisioning(ProvisioningFile provisioningFile) {
+		provisioningFile.platforms
+		registeredProvisioning.add(provisioningFile.getFile())
+		registeredProvisioningFiles.add(provisioningFile)
 	}
 
 	File fileFromPath(String path) {
@@ -111,7 +117,8 @@ class ProvisioningInstallTask extends Download {
 				reader.getUUID(),
 				reader.getTeamIdentifierPrefix(),
 				reader.getTeamName(),
-				reader.getName())
+				reader.getName(),
+				reader.getPlatforms())
 	}
 
 	private List<ProvisioningFile> rename() {

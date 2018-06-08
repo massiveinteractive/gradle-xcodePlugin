@@ -1,6 +1,7 @@
 package org.openbakery.signing
 
 import org.apache.commons.io.FilenameUtils
+import org.openbakery.xcode.Type
 
 class ProvisioningFile implements Serializable {
 
@@ -10,6 +11,7 @@ class ProvisioningFile implements Serializable {
 	private String teamIdentifier
 	private String teamName
 	private String name
+	private List<String> platforms
 
 	public static final String PROVISIONING_NAME_BASE = "gradle-"
 
@@ -18,13 +20,15 @@ class ProvisioningFile implements Serializable {
 					 String uuid,
 					 String teamIdentifier,
 					 String teamName,
-					 String name) {
+					 String name,
+					 List<String> platforms) {
 		this.applicationIdentifier = applicationIdentifier
 		this.file = file
 		this.uuid = uuid
 		this.teamIdentifier = teamIdentifier
 		this.teamName = teamName
 		this.name = name
+		this.platforms = platforms
 	}
 
 	String getApplicationIdentifier() {
@@ -55,7 +59,15 @@ class ProvisioningFile implements Serializable {
 		return formattedName(uuid, file)
 	}
 
-	public static String formattedName(String uuid, File file) {
+	List<String> getPlatforms() {
+		return platforms
+	}
+
+	boolean supportBuildType(Type type) {
+		return platforms.contains(type.value)
+	}
+
+	static String formattedName(String uuid, File file) {
 		return PROVISIONING_NAME_BASE + uuid + "." + FilenameUtils.getExtension(file.getName())
 	}
 }
