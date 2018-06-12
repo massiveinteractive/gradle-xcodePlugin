@@ -9,6 +9,7 @@ import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.*
 import org.openbakery.codesign.ProvisioningProfileReader
+import org.openbakery.extension.TargetConfiguration
 import org.openbakery.signing.KeychainCreateTask
 import org.openbakery.signing.ProvisioningInstallTask
 import org.openbakery.util.PathHelper
@@ -26,6 +27,9 @@ class PrepareXcodeArchivingTask extends DefaultTask {
 
 	@InputDirectory
 	final Provider<RegularFile> projectFile = newInputFile()
+
+	@Input
+	final ListProperty<TargetConfiguration> targetConfigurations = project.objects.listProperty(TargetConfiguration)
 
 	final Provider<String> scheme = project.objects.property(String)
 	final Provider<String> buildConfiguration = project.objects.property(String)
@@ -112,11 +116,16 @@ class PrepareXcodeArchivingTask extends DefaultTask {
 	}
 
 	private String findProductId(String rootKey) {
-		return getValueFromPbxProjFile("objects:${rootKey}:targets")
-				.find { it -> getObjectValueFromPbxProjFile("${it}:productName") == target.get() }
+		return findProductId(rootKey, target.get())
 	}
 
-	private String getBuildConfigurationIdentifier(String targetId) {
+	private String findProductId(String rootKey,
+								 String targetName) {
+		return getValueFromPbxProjFile("objects:${rootKey}:targets")
+				.find { it -> getObjectValueFromPbxProjFile("${it}:productName") == targetName }
+	}
+
+	private String getBuildConfigurationId(String targetId) {
 		String configurationId = getObjectValueFromPbxProjFile("$targetId:buildConfigurationList")
 		List<String> list = getObjectValueFromPbxProjFile("${configurationId}:buildConfigurations") as List<String>
 		return list.find {
@@ -142,31 +151,50 @@ class PrepareXcodeArchivingTask extends DefaultTask {
 
 	@TaskAction
 	void generate() {
-		String rootKey = getValueFromPbxProjFile("rootObject")
 
-		String buildConfigurationId = getBuildConfigurationIdentifier(findProductId(rootKey))
-
-		HashMap<String, String> map = new HashMap<>()
-
-		map.put("CODE_SIGN_STYLE", "Manual")
-
-		map.put(KEY_CODE_SIGN_IDENTITY, certificateFriendlyName.get())
-		map.put("CODE_SIGN_IDENTITY[sdk=iphoneos*]", certificateFriendlyName.get())
-		map.put(KEY_BUNDLE_IDENTIFIER, configurationBundleIdentifier.get())
-
-		if (provisioningReader.present) {
-			ProvisioningProfileReader reader = provisioningReader.get()
-			map.put(KEY_DEVELOPMENT_TEAM, reader.getTeamIdentifierPrefix())
-			map.put(KEY_PROVISIONING_PROFILE_ID, reader.getUUID())
-			map.put(KEY_PROVISIONING_PROFILE_SPEC, reader.getName())
+		(targetConfigurations.get() as List<TargetConfiguration>)
+				.each {
+				println it
+			configureTargetConfiguration(it)
 		}
 
-		if (entitlementsFile.present) {
-			map.put("CODE_SIGN_ENTITLEMENTS", entitlementsFile.get().asFile.absolutePath)
-		}
+//		String rootKey = getValueFromPbxProjFile("rootObject")
+//
+//		String buildConfigurationId = getBuildConfigurationId(findProductId(rootKey))
+//
+//		HashMap<String, String> map = new HashMap<>()
+//
+//		map.put("CODE_SIGN_STYLE", "Manual")
+//
+//		map.put(KEY_CODE_SIGN_IDENTITY, certificateFriendlyName.get())
+//		map.put(KEY_CODE_SIGN_IDENTITY + "[sdk=iphoneos*]", certificateFriendlyName.get())
+//		map.put(KEY_CODE_SIGN_IDENTITY + "[sdk=appletvos*]", certificateFriendlyName.get())
+//
+//		map.put(KEY_BUNDLE_IDENTIFIER, configurationBundleIdentifier.get())
+//
+//		if (provisioningReader.present) {
+//			ProvisioningProfileReader reader = provisioningReader.get()
+//			map.put(KEY_DEVELOPMENT_TEAM, reader.getTeamIdentifierPrefix())
+//			map.put(KEY_PROVISIONING_PROFILE_ID, reader.getUUID())
+//			map.put(KEY_PROVISIONING_PROFILE_SPEC, reader.getName())
+//		}
+//
+//		if (entitlementsFile.present) {
+//			map.put("CODE_SIGN_ENTITLEMENTS", entitlementsFile.get().asFile.absolutePath)
+//		}
+//
+//		map.each { k, v ->
+//			setBuildConfigurationBuildSetting(buildConfigurationId, k, v)
+//		}
+	}
 
-		map.each { k, v ->
-			setBuildConfigurationBuildSetting(buildConfigurationId, k, v)
+	private void configureTargetConfiguration(TargetConfiguration tc) {
+		final String rootKey = getValueFromPbxProjFile("rootObject")
+		String productId = findProductId(rootKey, tc.name)
+		String buildConfigurationId = getBuildConfigurationId(productId)
+
+		if (tc.certificateFile != null) {
+
 		}
 	}
 

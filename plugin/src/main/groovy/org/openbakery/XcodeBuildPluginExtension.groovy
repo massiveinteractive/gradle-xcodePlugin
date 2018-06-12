@@ -17,6 +17,7 @@ package org.openbakery
 
 import org.apache.commons.io.filefilter.SuffixFileFilter
 import org.apache.commons.lang.StringUtils
+import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.Project
 import org.gradle.api.Transformer
 import org.gradle.api.file.Directory
@@ -24,6 +25,7 @@ import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.Property
 import org.gradle.util.ConfigureUtil
 import org.openbakery.extension.Signing
+import org.openbakery.extension.TargetConfiguration
 import org.openbakery.util.PathHelper
 import org.openbakery.util.PlistHelper
 import org.openbakery.util.VariableResolver
@@ -47,6 +49,7 @@ class XcodeBuildPluginExtension {
 	final DirectoryProperty sharedPrecompsDir = project.layout.directoryProperty()
 	final DirectoryProperty derivedDataPath = project.layout.directoryProperty()
 	final Property<XcodeService> xcodeServiceProperty = project.objects.property(XcodeService)
+	final NamedDomainObjectContainer<TargetConfiguration> targetConfigurations
 
 	final Signing signing
 
@@ -108,8 +111,10 @@ class XcodeBuildPluginExtension {
 		this.symRoot.set(project.layout.buildDirectory.dir("sym"))
 		this.sharedPrecompsDir.set(project.layout.buildDirectory.dir("shared"))
 		this.derivedDataPath.set(project.layout.buildDirectory.dir("derivedData"))
-
 		this.targetType.set(Type.iOS)
+
+		targetConfigurations = project.container(TargetConfiguration)
+		project.extensions.targetConfigurations = targetConfigurations
 	}
 
 	private void configureServices() {
