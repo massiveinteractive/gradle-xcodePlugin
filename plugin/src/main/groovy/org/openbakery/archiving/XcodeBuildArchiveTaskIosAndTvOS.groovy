@@ -83,6 +83,8 @@ class XcodeBuildArchiveTaskIosAndTvOS extends Exec {
 			setEnvironment(map)
 		}
 
+		setWorkingDir(project.rootProject.rootDir)
+
 		super.exec()
 	}
 
