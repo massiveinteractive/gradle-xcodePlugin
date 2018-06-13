@@ -1,13 +1,13 @@
 package org.openbakery.archiving
 
 import groovy.transform.CompileStatic
-import org.gradle.api.DefaultTask
 import org.gradle.api.Task
 import org.gradle.api.Transformer
 import org.gradle.api.file.Directory
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
 import org.gradle.api.specs.Spec
+import org.gradle.api.tasks.Exec
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
@@ -20,7 +20,7 @@ import org.openbakery.xcode.Xcode
 import org.openbakery.xcode.Xcodebuild
 
 @CompileStatic
-class XcodeBuildArchiveTaskIosAndTvOS extends DefaultTask {
+class XcodeBuildArchiveTaskIosAndTvOS extends Exec {
 
 	@Input
 	final Provider<String> xcodeVersion = project.objects.property(String)
@@ -56,6 +56,9 @@ class XcodeBuildArchiveTaskIosAndTvOS extends DefaultTask {
 				return buildType.get() == Type.iOS || buildType.get() == Type.tvOS
 			}
 		})
+
+		setExecutable("xcodebuild")
+		setWorkingDir(project.rootProject.rootDir)
 	}
 
 	@TaskAction
@@ -69,11 +72,18 @@ class XcodeBuildArchiveTaskIosAndTvOS extends DefaultTask {
 				"\n\tScheme : ${scheme.get()} " +
 				"\n\tXcode version : ${xcodeVersion.getOrElse("System default")}")
 
-		Xcodebuild.archive(commandRunnerProperty.get(),
-				scheme.get(),
-				outputArchiveFile.get().asFile,
-				buildConfiguration.get(),
-				getXcodeAppForConfiguration().getOrNull())
+		args(Xcodebuild.ACTION_ARCHIVE,
+				Xcodebuild.ARGUMENT_SCHEME, scheme.get(),
+				Xcodebuild.ARGUMENT_CONFIGURATION, buildConfiguration.get(),
+				Xcodebuild.ARGUMENT_ARCHIVE_PATH, outputArchiveFile.get().asFile.absolutePath)
+
+		if (getXcodeAppForConfiguration().present) {
+			HashMap<String, String> map = new HashMap<>()
+			map.put(Xcode.ENV_DEVELOPER_DIR, getXcodeAppForConfiguration().present ? getXcodeAppForConfiguration().get().absolutePath : null)
+			setEnvironment(map)
+		}
+
+		super.exec()
 	}
 
 	private Provider<File> getXcodeAppForConfiguration() {

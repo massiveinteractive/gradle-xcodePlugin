@@ -19,6 +19,7 @@ class Xcodebuild {
 	public static final String EXECUTABLE = "xcodebuild"
 	public static final String ACTION_ARCHIVE = "archive"
 	public static final String ACTION_EXPORT_ARCHIVE = "-exportArchive"
+	public static final String ARGUMENT_CONFIGURATION = "-configuration"
 	public static final String ARGUMENT_SCHEME = "-scheme"
 	public static final String ARGUMENT_ARCHIVE_PATH = "-archivePath"
 	public static final String ARGUMENT_EXPORT_PATH = "-exportPath"

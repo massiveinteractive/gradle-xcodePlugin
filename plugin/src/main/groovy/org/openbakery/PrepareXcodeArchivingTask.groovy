@@ -14,6 +14,7 @@ import org.openbakery.signing.KeychainCreateTask
 import org.openbakery.signing.ProvisioningInstallTask
 import org.openbakery.util.PathHelper
 import org.openbakery.util.PlistHelper
+import org.openbakery.util.SignatureUtil
 
 @CompileStatic
 class PrepareXcodeArchivingTask extends DefaultTask {
@@ -151,50 +152,58 @@ class PrepareXcodeArchivingTask extends DefaultTask {
 
 	@TaskAction
 	void generate() {
-
 		(targetConfigurations.get() as List<TargetConfiguration>)
 				.each {
-				println it
 			configureTargetConfiguration(it)
 		}
-
-//		String rootKey = getValueFromPbxProjFile("rootObject")
-//
-//		String buildConfigurationId = getBuildConfigurationId(findProductId(rootKey))
-//
-//		HashMap<String, String> map = new HashMap<>()
-//
-//		map.put("CODE_SIGN_STYLE", "Manual")
-//
-//		map.put(KEY_CODE_SIGN_IDENTITY, certificateFriendlyName.get())
-//		map.put(KEY_CODE_SIGN_IDENTITY + "[sdk=iphoneos*]", certificateFriendlyName.get())
-//		map.put(KEY_CODE_SIGN_IDENTITY + "[sdk=appletvos*]", certificateFriendlyName.get())
-//
-//		map.put(KEY_BUNDLE_IDENTIFIER, configurationBundleIdentifier.get())
-//
-//		if (provisioningReader.present) {
-//			ProvisioningProfileReader reader = provisioningReader.get()
-//			map.put(KEY_DEVELOPMENT_TEAM, reader.getTeamIdentifierPrefix())
-//			map.put(KEY_PROVISIONING_PROFILE_ID, reader.getUUID())
-//			map.put(KEY_PROVISIONING_PROFILE_SPEC, reader.getName())
-//		}
-//
-//		if (entitlementsFile.present) {
-//			map.put("CODE_SIGN_ENTITLEMENTS", entitlementsFile.get().asFile.absolutePath)
-//		}
-//
-//		map.each { k, v ->
-//			setBuildConfigurationBuildSetting(buildConfigurationId, k, v)
-//		}
 	}
 
 	private void configureTargetConfiguration(TargetConfiguration tc) {
-		final String rootKey = getValueFromPbxProjFile("rootObject")
-		String productId = findProductId(rootKey, tc.name)
-		String buildConfigurationId = getBuildConfigurationId(productId)
+		HashMap<String, String> map = new HashMap<>()
+		configureSignature(map, tc)
+		configureProvisioning(map, tc)
+		configureEntitlements(map, tc)
 
-		if (tc.certificateFile != null) {
+		final String buildConfigurationId = getBuildConfigurationId(findProductId(
+				getValueFromPbxProjFile("rootObject") as String,
+				tc.name))
 
+		map.each { k, v ->
+			setBuildConfigurationBuildSetting(buildConfigurationId, k, v)
+		}
+	}
+
+	private void configureSignature(HashMap<String, String> map,
+									TargetConfiguration tc) {
+		if (tc.certificateFile != null && tc.certificateFile.exists()) {
+			String friendlyName = SignatureUtil.getCertificateFriendlyName(tc.certificateFile,
+					tc.certificatePassword)
+
+			map.put(KEY_CODE_SIGN_IDENTITY, friendlyName)
+			map.put(KEY_CODE_SIGN_IDENTITY + "[sdk=iphoneos*]", friendlyName)
+			map.put(KEY_CODE_SIGN_IDENTITY + "[sdk=appletvos*]", friendlyName)
+		}
+
+		map.put("CODE_SIGN_STYLE", "Manual")
+	}
+
+	private void configureProvisioning(HashMap<String, String> map,
+									   TargetConfiguration tc) {
+		if (tc.provisioningFile != null) {
+			ProvisioningProfileReader reader = new ProvisioningProfileReader(tc.provisioningFile,
+					commandRunnerProperty.get())
+
+			map.put(KEY_DEVELOPMENT_TEAM, reader.getTeamIdentifierPrefix())
+			map.put(KEY_PROVISIONING_PROFILE_ID, reader.getUUID())
+			map.put(KEY_PROVISIONING_PROFILE_SPEC, reader.getName())
+		}
+	}
+
+	private void configureEntitlements(HashMap<String, String> map,
+									   TargetConfiguration tc) {
+
+		if (tc.entitlementsFile != null) {
+			map.put(KEY_CODE_SIGN_ENTITLEMENTS, tc.entitlementsFile.absolutePath)
 		}
 	}
 
