@@ -68,7 +68,7 @@ class XcodeBuildArchiveTaskIosAndTvOS extends Exec {
 
 		outputArchiveFile.get().asFile.parentFile.mkdirs()
 
-		logger.lifecycle("Archive project with configuration: " +
+		println("Archive project with configuration: " +
 				"\n\tScheme : ${scheme.get()} " +
 				"\n\tXcode version : ${xcodeVersion.getOrElse("System default")}")
 
