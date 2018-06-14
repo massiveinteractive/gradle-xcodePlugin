@@ -11,10 +11,10 @@ import org.openbakery.CommandRunner
 import org.openbakery.CommandRunnerException
 import org.openbakery.codesign.Security
 import org.openbakery.util.FileUtil
+import org.openbakery.util.SignatureUtil
 import org.openbakery.util.SystemUtil
 import org.openbakery.xcode.Version
 
-import java.util.regex.Matcher
 import java.util.regex.Pattern
 
 @CompileStatic
@@ -110,7 +110,8 @@ class KeychainCreateTask extends Download {
 	}
 
 	private void parseCertificateFile() {
-		certificateFriendlyName.set(getSignatureFriendlyName())
+		certificateFriendlyName.set(SignatureUtil.getCertificateFriendlyName(temporaryCertificateFile,
+				certificatePassword.get()))
 
 		// Delete on exit the downloaded files
 		project.gradle.buildFinished {
@@ -195,38 +196,5 @@ class KeychainCreateTask extends Download {
 
 			logger.info("The temporary keychain has been removed from the search list")
 		}
-	}
-
-	String getSignatureFriendlyName() {
-		return java.util.Optional.ofNullable(getKeyContent(temporaryCertificateFile)
-				.split(System.getProperty("line.separator"))
-				.find { PATTERN.matcher(it).matches() })
-				.map { PATTERN.matcher(it) }
-				.filter { Matcher it -> it.matches() }
-				.map { Matcher it ->
-			return it.group("friendlyName")
-		}
-		.orElseThrow {
-			new IllegalArgumentException("Failed to resolve the code signing identity from the certificate ")
-		}
-	}
-
-	private String getKeyContent(File file) {
-		String result
-		try {
-			result = commandRunnerProperty.get()
-					.runWithResult(["openssl",
-									"pkcs12",
-									"-nokeys",
-									"-in",
-									file.absolutePath,
-									"-passin",
-									"pass:" + certificatePassword.get()])
-		} catch (CommandRunnerException exception) {
-			logger.warn(exception.toString())
-			result = null
-		}
-
-		return result
 	}
 }
