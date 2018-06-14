@@ -587,7 +587,7 @@ class XcodePlugin implements Plugin<Project> {
 				ProvisioningInstallTask) {
 			it.group = XCODE_GROUP_NAME
 
-			it.buildType.set(xcodeBuildPluginExtension.type)
+			it.buildType.set(xcodeBuildPluginExtension.targetType)
 			it.commandRunnerProperty.set(commandRunner)
 			it.mobileProvisioningList.set(signingExtension.mobileProvisionList)
 			it.outputDirectory.set(signingExtension.provisioningDestinationRoot)
