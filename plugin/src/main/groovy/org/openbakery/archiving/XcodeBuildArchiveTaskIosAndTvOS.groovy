@@ -1,13 +1,13 @@
 package org.openbakery.archiving
 
 import groovy.transform.CompileStatic
+import org.gradle.api.DefaultTask
 import org.gradle.api.Task
 import org.gradle.api.Transformer
 import org.gradle.api.file.Directory
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
 import org.gradle.api.specs.Spec
-import org.gradle.api.tasks.Exec
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
@@ -20,7 +20,7 @@ import org.openbakery.xcode.Xcode
 import org.openbakery.xcode.Xcodebuild
 
 @CompileStatic
-class XcodeBuildArchiveTaskIosAndTvOS extends Exec {
+class XcodeBuildArchiveTaskIosAndTvOS extends DefaultTask {
 
 	@Input
 	final Provider<String> xcodeVersion = project.objects.property(String)
@@ -56,36 +56,51 @@ class XcodeBuildArchiveTaskIosAndTvOS extends Exec {
 				return buildType.get() == Type.iOS || buildType.get() == Type.tvOS
 			}
 		})
-
-		setExecutable("xcodebuild")
-		setWorkingDir(project.rootProject.rootDir)
 	}
 
 	@TaskAction
 	void archive() {
+		logger.info("Archive project with configuration: " +
+				"\n\tScheme : ${scheme.getOrNull()} " +
+				"\n\tXcode version : ${xcodeVersion.getOrElse("System default")}" +
+				"\n\tBuild configuration : ${buildConfiguration.getOrNull()}")
+
+		final Process process = configureProcessBuilder().start()
+		process.waitFor()
+
+		if (process.exitValue() != 0) {
+			throw new RuntimeException(process.errorStream.getText())
+		}
+	}
+
+	private ProcessBuilder configureProcessBuilder() {
 		assert scheme.present: "No target scheme configured"
+		assert buildConfiguration.present: "No build configuration configured"
 		assert outputArchiveFile.present: "No output file folder configured"
 
-		outputArchiveFile.get().asFile.parentFile.mkdirs()
-
-		println("Archive project with configuration: " +
-				"\n\tScheme : ${scheme.get()} " +
-				"\n\tXcode version : ${xcodeVersion.getOrElse("System default")}")
-
-		args(Xcodebuild.ACTION_ARCHIVE,
+		ProcessBuilder builder = new ProcessBuilder("xcodebuild",
+				Xcodebuild.ACTION_ARCHIVE,
 				Xcodebuild.ARGUMENT_SCHEME, scheme.get(),
 				Xcodebuild.ARGUMENT_CONFIGURATION, buildConfiguration.get(),
 				Xcodebuild.ARGUMENT_ARCHIVE_PATH, outputArchiveFile.get().asFile.absolutePath)
 
 		if (getXcodeAppForConfiguration().present) {
-			HashMap<String, String> map = new HashMap<>()
-			map.put(Xcode.ENV_DEVELOPER_DIR, getXcodeAppForConfiguration().present ? getXcodeAppForConfiguration().get().absolutePath : null)
-			setEnvironment(map)
+			builder.environment().put(Xcode.ENV_DEVELOPER_DIR,
+					getXcodeAppForConfiguration().map { it.absolutePath }.get() as String)
 		}
 
-		setWorkingDir(project.rootProject.rootDir)
 
-		super.exec()
+		builder.redirectOutput(configureLogOutputFile())
+		return builder
+	}
+
+	private File configureLogOutputFile() {
+		File file = project.layout
+				.buildDirectory
+				.file("archiving_output.log").get().asFile
+
+		logger.info("Build log located here : ", file.path)
+		return file
 	}
 
 	private Provider<File> getXcodeAppForConfiguration() {
