@@ -84,6 +84,8 @@ class XcodeBuildArchiveTaskIosAndTvOS extends DefaultTask {
 				Xcodebuild.ARGUMENT_CONFIGURATION, buildConfiguration.get(),
 				Xcodebuild.ARGUMENT_ARCHIVE_PATH, outputArchiveFile.get().asFile.absolutePath)
 
+		builder.directory(project.rootProject.rootDir)
+
 		if (getXcodeAppForConfiguration().present) {
 			builder.environment().put(Xcode.ENV_DEVELOPER_DIR,
 					getXcodeAppForConfiguration().map { it.absolutePath }.get() as String)
