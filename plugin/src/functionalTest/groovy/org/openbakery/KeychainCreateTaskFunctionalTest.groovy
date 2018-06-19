@@ -3,43 +3,23 @@ package org.openbakery
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
-import org.junit.Rule
-import org.junit.rules.TemporaryFolder
 import org.openbakery.signing.KeychainCreateTask
 import spock.lang.Shared
-import spock.lang.Specification
 
 import java.nio.file.Paths
 
-class KeychainCreateTaskFunctionalTest extends Specification {
-
-	@Rule
-	final TemporaryFolder testProjectDir = new TemporaryFolder()
-
-	List<File> pluginClasspath
+class KeychainCreateTaskFunctionalTest extends FunctionalTestBase {
 
 	@Shared
 	File certificate
 
-	File buildFile
-
 	def setup() {
-		def pluginClasspathResource = getClass().classLoader.findResource("plugin-classpath.txt")
-		if (pluginClasspathResource == null) {
-			throw new IllegalStateException("Did not find plugin classpath resource, run `testClasses` build task.")
-		}
-
-		pluginClasspath = pluginClasspathResource.readLines().collect { new File(it) }
+		extractPluginClassPathResource()
+		createMockBuildFile()
+		copyTestProject()
 
 		certificate = findResource("fake_distribution.p12")
 		assert certificate.exists()
-
-		buildFile = testProjectDir.newFile('build.gradle')
-		buildFile << """
-            plugins {
-                id 'org.openbakery.xcode-plugin'
-            }
-        """
 	}
 
 	def "The task list should contain the task"() {

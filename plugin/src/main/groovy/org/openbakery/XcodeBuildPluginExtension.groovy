@@ -401,12 +401,16 @@ class XcodeBuildPluginExtension {
 			return this.projectFile
 		}
 
-		String[] projectFiles = project.rootProject.projectDir.list(new SuffixFileFilter(".xcodeproj"))
+		String[] projectFiles = project.rootProject
+				.projectDir
+				.list(new SuffixFileFilter(".xcodeproj"))
+
 		if (!projectFiles || projectFiles.length < 1) {
 			throw new FileNotFoundException("No Xcode project files were found in ${project.projectDir}")
 		}
 
-		return new File(project.rootProject.projectDir, projectFiles.first())
+		return new File(project.rootProject.projectDir,
+				projectFiles.first())
 	}
 
 	// should be remove in the future, so that every task has its own xcode object

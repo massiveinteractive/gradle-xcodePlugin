@@ -8,14 +8,11 @@ import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.*
 import org.openbakery.CommandRunner
-import org.openbakery.CommandRunnerException
 import org.openbakery.codesign.Security
 import org.openbakery.util.FileUtil
 import org.openbakery.util.SignatureUtil
 import org.openbakery.util.SystemUtil
 import org.openbakery.xcode.Version
-
-import java.util.regex.Pattern
 
 @CompileStatic
 class KeychainCreateTask extends Download {
@@ -43,8 +40,6 @@ class KeychainCreateTask extends Download {
 
 	final Property<Security> security = project.objects.property(Security)
 	final DirectoryProperty outputDirectory = newOutputDirectory()
-
-	private static final Pattern PATTERN = ~/^\s{4}friendlyName:\s(?<friendlyName>[^\n]+)/
 
 	static final String TASK_NAME = "keychainCreate"
 	static final String TASK_DESCRIPTION = "Create a keychain that is used for signing the app"

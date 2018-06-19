@@ -42,5 +42,9 @@
 	<array>
 		<string>XXXYYYZZZZ</string>
 	</array>
+	<key>Platform</key>
+    <array>
+        <string>iOS</string>
+    </array>
 </dict>
 </plist>

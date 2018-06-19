@@ -101,6 +101,10 @@ class XcodeProjectFile {
 			throw new IllegalArgumentException("'xcodebuild.target' is null");
 		}
 
+		if (!project.xcodebuild.configuration.present) {
+			throw new IllegalArgumentException("'xcodebuild.configuration' is not defined");
+		}
+
 		BuildConfiguration settings = getBuildConfiguration(project.xcodebuild.target.get(), project.xcodebuild.configuration.get())
 		logger.debug("rootObjectKey {}", rootObjectKey);
 		verifyTarget(project.xcodebuild.target.get())

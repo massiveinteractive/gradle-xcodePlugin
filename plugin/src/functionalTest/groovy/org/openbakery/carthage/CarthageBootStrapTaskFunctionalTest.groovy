@@ -3,34 +3,15 @@ package org.openbakery.carthage
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
-import org.junit.Rule
-import org.junit.rules.TemporaryFolder
-import spock.lang.Specification
+import org.openbakery.FunctionalTestBase
 
-class CarthageBootStrapTaskFunctionalTest extends Specification {
-	@Rule
-	final TemporaryFolder testProjectDir = new TemporaryFolder()
+class CarthageBootStrapTaskFunctionalTest extends FunctionalTestBase {
 
-	List<File> pluginClasspath
-	File buildFile
 	GradleRunner gradleRunner
 	File carthageFolder
 
 	void setup() {
-		buildFile = testProjectDir.newFile('build.gradle')
-
-		buildFile << """
-            plugins {
-                id 'org.openbakery.xcode-plugin'
-            }
-        """
-
-		def pluginClasspathResource = getClass().classLoader.findResource("plugin-classpath.txt")
-		if (pluginClasspathResource == null) {
-			throw new IllegalStateException("Did not find plugin classpath resource, run `testClasses` build task.")
-		}
-
-		pluginClasspath = pluginClasspathResource.readLines().collect { new File(it) }
+		genericSetup()
 
 		gradleRunner = GradleRunner.create()
 				.withProjectDir(testProjectDir.root)
@@ -59,7 +40,7 @@ class CarthageBootStrapTaskFunctionalTest extends Specification {
 
 	def "The task should be executed with success if a `cartfile.resolved` file is present"() {
 		setup:
-		testProjectDir.newFile(CarthageBootStrapTask.CARTHAGE_RESOLVED_FILE)
+		testProjectDir.newFile(CarthageBootStrapTask.CARTHAGE_FILE)
 
 		when:
 		BuildResult result = gradleRunner.build()
@@ -76,7 +57,7 @@ class CarthageBootStrapTaskFunctionalTest extends Specification {
             github "ashleymills/Reachability.swift"
         """
 
-		File carthageResolvedFile = testProjectDir.newFile(CarthageBootStrapTask.CARTHAGE_RESOLVED_FILE)
+		File carthageResolvedFile = testProjectDir.newFile(CarthageBootStrapTask.CARTHAGE_FILE)
 		carthageResolvedFile << """
             github "ashleymills/Reachability.swift" "v4.1.0"
         """
@@ -114,7 +95,7 @@ class CarthageBootStrapTaskFunctionalTest extends Specification {
             github "ashleymills/Reachability.swift"
         """
 
-		File carthageResolvedFile = testProjectDir.newFile(CarthageBootStrapTask.CARTHAGE_RESOLVED_FILE)
+		File carthageResolvedFile = testProjectDir.newFile(CarthageBootStrapTask.CARTHAGE_FILE)
 		carthageResolvedFile << """
             github "ashleymills/Reachability.swift" "v4.1.0"
         """

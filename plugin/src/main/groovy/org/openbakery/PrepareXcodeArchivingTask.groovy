@@ -10,8 +10,6 @@ import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.*
 import org.openbakery.codesign.ProvisioningProfileReader
 import org.openbakery.extension.TargetConfiguration
-import org.openbakery.signing.KeychainCreateTask
-import org.openbakery.signing.ProvisioningInstallTask
 import org.openbakery.util.PathHelper
 import org.openbakery.util.PlistHelper
 import org.openbakery.util.SignatureUtil
@@ -32,7 +30,6 @@ class PrepareXcodeArchivingTask extends DefaultTask {
 	@Input
 	final ListProperty<TargetConfiguration> targetConfigurations = project.objects.listProperty(TargetConfiguration)
 
-	final Provider<String> scheme = project.objects.property(String)
 	final Provider<String> buildConfiguration = project.objects.property(String)
 	final Provider<String> target = project.objects.property(String)
 
@@ -50,7 +47,6 @@ class PrepareXcodeArchivingTask extends DefaultTask {
 	public static final String DESCRIPTION = "Prepare the archive configuration file"
 	public static final String NAME = "prepareArchiving"
 
-	static final String KEY_BUNDLE_IDENTIFIER = "PRODUCT_BUNDLE_IDENTIFIER"
 	static final String KEY_CODE_SIGN_IDENTITY = "CODE_SIGN_IDENTITY"
 	static final String KEY_CODE_SIGN_ENTITLEMENTS = "CODE_SIGN_ENTITLEMENTS"
 	static final String KEY_DEVELOPMENT_TEAM = "DEVELOPMENT_TEAM"
@@ -59,12 +55,7 @@ class PrepareXcodeArchivingTask extends DefaultTask {
 
 	PrepareXcodeArchivingTask() {
 		super()
-
-		dependsOn(XcodePlugin.INFOPLIST_MODIFY_TASK_NAME)
-		dependsOn(XcodePlugin.XCODE_CONFIG_TASK_NAME)
-		dependsOn(KeychainCreateTask.TASK_NAME)
-		dependsOn(ProvisioningInstallTask.TASK_NAME)
-
+		
 		this.description = DESCRIPTION
 
 		this.entitlementsFilePath.set(entitlementsFile.map(new Transformer<String, RegularFile>() {

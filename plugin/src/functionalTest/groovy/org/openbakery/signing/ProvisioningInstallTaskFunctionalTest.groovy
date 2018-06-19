@@ -2,50 +2,28 @@ package org.openbakery.signing
 
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
-import org.junit.Rule
-import org.junit.rules.TemporaryFolder
-import spock.lang.Specification
+import org.openbakery.FunctionalTestBase
 import spock.lang.Unroll
 
 import java.nio.file.Paths
 
-class ProvisioningInstallTaskFunctionalTest extends Specification {
-	@Rule
-	final TemporaryFolder testProjectDir = new TemporaryFolder()
+class ProvisioningInstallTaskFunctionalTest extends FunctionalTestBase {
 
-	List<File> pluginClasspath
-
-	File buildFile
 	File provisioningFile1
 
 	def setup() {
-		buildFile = testProjectDir.newFile('build.gradle')
-
-		buildFile << """
-            plugins {
-                id 'org.openbakery.xcode-plugin'
-            }
-        """
-
+		genericSetup()
 		provisioningFile1 = findResource("test1.mobileprovision")
 		assert provisioningFile1.exists()
-
-		def pluginClasspathResource = getClass().classLoader
-				.findResource("plugin-classpath.txt")
-
-		if (pluginClasspathResource == null) {
-			throw new IllegalStateException("Did not find plugin classpath resource, run `testClasses` build task.")
-		}
-
-		pluginClasspath = pluginClasspathResource.readLines().collect { new File(it) }
 	}
 
 	def "The task list should contain the task"() {
 		when:
 		def result = GradleRunner.create()
 				.withProjectDir(testProjectDir.root)
-				.withArguments('tasks')
+				.withArguments('tasks', '--s')
 				.withPluginClasspath(pluginClasspath)
+				.withDebug(true)
 				.build()
 
 		then:
@@ -102,7 +80,7 @@ class ProvisioningInstallTaskFunctionalTest extends Specification {
 		when:
 		def result = GradleRunner.create()
 				.withProjectDir(testProjectDir.root)
-				.withArguments(ProvisioningInstallTask.TASK_NAME)
+				.withArguments(ProvisioningInstallTask.TASK_NAME, "--s")
 				.withPluginClasspath(pluginClasspath)
 				.withDebug(true)
 				.build()
@@ -141,10 +119,8 @@ class ProvisioningInstallTaskFunctionalTest extends Specification {
 
 		where:
 		gradleVersion | _
-		"4.4"         | _
-		"4.5"         | _
-		"4.6"         | _
 		"4.7"         | _
+		"4.8"         | _
 	}
 
 	private File findResource(String name) {
