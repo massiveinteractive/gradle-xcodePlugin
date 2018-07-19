@@ -55,7 +55,7 @@ class PrepareXcodeArchivingTask extends DefaultTask {
 
 	PrepareXcodeArchivingTask() {
 		super()
-		
+
 		this.description = DESCRIPTION
 
 		this.entitlementsFilePath.set(entitlementsFile.map(new Transformer<String, RegularFile>() {
@@ -86,15 +86,6 @@ class PrepareXcodeArchivingTask extends DefaultTask {
 		this.outputFile.set(project.layout
 				.buildDirectory
 				.file(PathHelper.FOLDER_ARCHIVE + "/" + PathHelper.GENERATED_XCARCHIVE_FILE_NAME))
-
-		this.onlyIf {
-			println "provisioningForConfiguration : " + provisioningForConfiguration
-			println "configurationBundleIdentifier : " + configurationBundleIdentifier
-			println "certificateFriendlyName : " + certificateFriendlyName
-			return certificateFriendlyName.present &&
-					configurationBundleIdentifier.present &&
-					provisioningForConfiguration.present
-		}
 	}
 
 	private File getPbxProjFile() {
@@ -138,6 +129,7 @@ class PrepareXcodeArchivingTask extends DefaultTask {
 			plistHelperProperty.get()
 					.addValueForPlist(getPbxProjFile(), completeKey, value)
 		} else {
+
 			plistHelperProperty.get()
 					.setValueForPlist(getPbxProjFile(), completeKey, value)
 		}
