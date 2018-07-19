@@ -10,6 +10,7 @@ import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.*
 import org.openbakery.codesign.ProvisioningProfileReader
 import org.openbakery.extension.TargetConfiguration
+import org.openbakery.signing.KeychainCreateTask
 import org.openbakery.util.PathHelper
 import org.openbakery.util.PlistHelper
 import org.openbakery.util.SignatureUtil
@@ -56,6 +57,7 @@ class PrepareXcodeArchivingTask extends DefaultTask {
 	PrepareXcodeArchivingTask() {
 		super()
 
+		this.dependsOn(KeychainCreateTask.TASK_NAME)
 		this.description = DESCRIPTION
 
 		this.entitlementsFilePath.set(entitlementsFile.map(new Transformer<String, RegularFile>() {
@@ -86,6 +88,16 @@ class PrepareXcodeArchivingTask extends DefaultTask {
 		this.outputFile.set(project.layout
 				.buildDirectory
 				.file(PathHelper.FOLDER_ARCHIVE + "/" + PathHelper.GENERATED_XCARCHIVE_FILE_NAME))
+
+		this.onlyIf {
+//			println "configurationBundleIdentifier :>> " + configurationBundleIdentifier
+//			println "provisioningForConfiguration : " + provisioningForConfiguration
+//			println "certificateFriendlyName : " + certificateFriendlyName
+			return certificateFriendlyName.present
+//			 &&
+//					configurationBundleIdentifier.present &&
+//					provisioningForConfiguration.present
+		}
 	}
 
 	private File getPbxProjFile() {
