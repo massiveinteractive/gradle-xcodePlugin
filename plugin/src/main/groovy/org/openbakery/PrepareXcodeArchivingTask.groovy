@@ -88,6 +88,9 @@ class PrepareXcodeArchivingTask extends DefaultTask {
 				.file(PathHelper.FOLDER_ARCHIVE + "/" + PathHelper.GENERATED_XCARCHIVE_FILE_NAME))
 
 		this.onlyIf {
+			println "provisioningForConfiguration : " + provisioningForConfiguration
+			println "configurationBundleIdentifier : " + configurationBundleIdentifier
+			println "certificateFriendlyName : " + certificateFriendlyName
 			return certificateFriendlyName.present &&
 					configurationBundleIdentifier.present &&
 					provisioningForConfiguration.present
@@ -135,7 +138,6 @@ class PrepareXcodeArchivingTask extends DefaultTask {
 			plistHelperProperty.get()
 					.addValueForPlist(getPbxProjFile(), completeKey, value)
 		} else {
-
 			plistHelperProperty.get()
 					.setValueForPlist(getPbxProjFile(), completeKey, value)
 		}
