@@ -154,6 +154,7 @@ class PrepareXcodeArchivingTask extends DefaultTask {
 		configureSignature(map, tc)
 		configureProvisioning(map, tc)
 		configureEntitlements(map, tc)
+		configureInfoPlist(map, tc)
 
 		final String buildConfigurationId = getBuildConfigurationId(findProductId(
 				getValueFromPbxProjFile("rootObject") as String,
@@ -195,6 +196,13 @@ class PrepareXcodeArchivingTask extends DefaultTask {
 
 		if (tc.entitlementsFile != null) {
 			map.put(KEY_CODE_SIGN_ENTITLEMENTS, tc.entitlementsFile.absolutePath)
+		}
+	}
+
+	private void configureInfoPlist(HashMap<String, String> map,
+									TargetConfiguration tc) {
+		if (tc.bundleIdentifier != null) {
+			map.put("BUNDLE_ID", tc.bundleIdentifier)
 		}
 	}
 
