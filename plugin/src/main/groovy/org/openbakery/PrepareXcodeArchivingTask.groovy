@@ -166,6 +166,8 @@ class PrepareXcodeArchivingTask extends DefaultTask {
 				getValueFromPbxProjFile("rootObject") as String,
 				tc.name))
 
+		configurePlist(buildConfigurationId, tc)
+
 		map.each { k, v ->
 			setBuildConfigurationBuildSetting(buildConfigurationId, k, v)
 		}
@@ -222,5 +224,33 @@ class PrepareXcodeArchivingTask extends DefaultTask {
 					  "-o", file.absolutePath])
 
 		return file
+	}
+
+	private void configurePlist(String buildConfigurationId,
+								TargetConfiguration tc) {
+		String plistPath = getValueFromPbxProjFile(
+				":objects:${buildConfigurationId}:buildSettings:INFOPLIST_FILE")
+		
+		File file = project.rootProject.file(plistPath)
+		assert file.exists()
+
+		setValueOrCreate(file, "CFBundleVersion", tc.version)
+		setValueOrCreate(file, "CFBundleShortVersionString", tc.shortVersion)
+	}
+
+	private void setValueOrCreate(File file,
+								  String key,
+								  String value) {
+
+		String currentValue = plistHelperProperty.get()
+				.getValueFromPlist(file, key)
+
+		if (currentValue == null) {
+			plistHelperProperty.get()
+					.addValueForPlist(file, key, value)
+		} else {
+			plistHelperProperty.get()
+					.setValueForPlist(file, key, value)
+		}
 	}
 }

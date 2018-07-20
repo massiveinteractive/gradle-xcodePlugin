@@ -10,6 +10,8 @@ class TargetConfiguration implements Serializable {
 	public String certificatePassword
 	public String bundleIdentifier
 	public File entitlementsFile
+	public String version
+	public String shortVersion
 
 	private final String name
 
