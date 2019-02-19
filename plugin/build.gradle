@@ -98,7 +98,7 @@ uploadArchives {
 		mavenDeployer {
 			configuration = configurations.deployerJars
 
-			repository(url: publishURL) {
+			repository(url: mavenLocal().url) {
 				authentication(userName: publishUser, password: publishPassword)
 			}
 

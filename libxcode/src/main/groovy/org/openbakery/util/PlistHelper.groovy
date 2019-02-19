@@ -98,9 +98,9 @@ class PlistHelper {
 
 
 	void setValueForPlist(File plist, String key, String value) {
-		commandForPlist(plist, "Set :" + key + " " + value)
+		if (value != null)
+			commandForPlist(plist, "Set :" + key + " " + value)
 	}
-
 
 	void commandForPlist(File plist, String command) {
 		if (!plist.exists()) {

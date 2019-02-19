@@ -234,8 +234,11 @@ class PrepareXcodeArchivingTask extends DefaultTask {
 		File file = project.rootProject.file(plistPath)
 		assert file.exists()
 
-		setValueOrCreate(file, "CFBundleVersion", tc.version)
-		setValueOrCreate(file, "CFBundleShortVersionString", tc.shortVersion)
+		if (tc.version != null)
+			setValueOrCreate(file, "CFBundleVersion", tc.version)
+	
+		if (tc.shortVersion != null)
+			setValueOrCreate(file, "CFBundleShortVersionString", tc.shortVersion)
 	}
 
 	private void setValueOrCreate(File file,
