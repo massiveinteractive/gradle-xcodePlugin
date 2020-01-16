@@ -28,6 +28,8 @@ class XcodeBuildArchiveTaskIosAndTvOS extends DefaultTask {
 	@Input
 	final Provider<String> scheme = project.objects.property(String)
 
+	final Provider<String> workspace = project.objects.property(String)
+
 	@Input
 	final Provider<Type> buildType = project.objects.property(Type)
 
@@ -60,7 +62,7 @@ class XcodeBuildArchiveTaskIosAndTvOS extends DefaultTask {
 
 	@TaskAction
 	void archive() {
-		logger.info("Archive project with configuration: " +
+		println("Archive project with configuration: " +
 				"\n\tScheme : ${scheme.getOrNull()} " +
 				"\n\tXcode version : ${xcodeVersion.getOrElse("System default")}" +
 				"\n\tBuild configuration : ${buildConfiguration.getOrNull()}")
@@ -78,11 +80,25 @@ class XcodeBuildArchiveTaskIosAndTvOS extends DefaultTask {
 		assert buildConfiguration.present: "No build configuration configured"
 		assert outputArchiveFile.present: "No output file folder configured"
 
-		ProcessBuilder builder = new ProcessBuilder("xcodebuild",
-				Xcodebuild.ACTION_ARCHIVE,
-				Xcodebuild.ARGUMENT_SCHEME, scheme.get(),
-				Xcodebuild.ARGUMENT_CONFIGURATION, buildConfiguration.get(),
-				Xcodebuild.ARGUMENT_ARCHIVE_PATH, outputArchiveFile.get().asFile.absolutePath)
+
+		ProcessBuilder builder
+
+		ArrayList<String> args = new ArrayList<String>([
+			"xcodebuild",
+			Xcodebuild.ACTION_ARCHIVE,
+			Xcodebuild.ARGUMENT_SCHEME, scheme.get(),
+			Xcodebuild.ARGUMENT_CONFIGURATION, buildConfiguration.get(),
+			Xcodebuild.ARGUMENT_ARCHIVE_PATH, outputArchiveFile.get().asFile.absolutePath
+		])
+
+		if (workspace.isPresent()) {
+			args.add(Xcodebuild.ARGUMENT_WORKSPACE)
+			args.add(workspace.get())
+		}
+
+		logger.debug("Running : ", args.join(" "))
+
+		builder = new ProcessBuilder(args)
 
 		builder.directory(project.rootProject.rootDir)
 

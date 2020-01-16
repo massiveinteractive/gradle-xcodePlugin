@@ -512,6 +512,7 @@ class XcodePlugin implements Plugin<Project> {
 			it.scheme.set(xcodeBuildPluginExtension.scheme)
 			it.xcode.set(xcode)
 			it.xcodeVersion.set(xcodeBuildPluginExtension.version)
+			it.workspace.set(xcodeBuildPluginExtension.workspace)
 			it.xcodeServiceProperty.set(xcodeBuildPluginExtension.xcodeServiceProperty)
 		}
 

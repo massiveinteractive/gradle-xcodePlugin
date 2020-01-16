@@ -149,7 +149,7 @@ class XcodeBuildPluginExtension {
 		if (workspace != null) {
 			return workspace
 		}
-		String[] fileList = project.projectDir.list(new SuffixFileFilter(".xcworkspace"))
+		String[] fileList = project.rootProject.projectDir.list(new SuffixFileFilter(".xcworkspace"))
 		if (fileList != null && fileList.length) {
 			return fileList[0]
 		}
